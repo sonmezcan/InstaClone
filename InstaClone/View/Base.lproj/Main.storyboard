@@ -237,11 +237,31 @@
                                             <constraint firstAttribute="height" constant="128" id="JdJ-1W-XoY"/>
                                         </constraints>
                                     </imageView>
+                                    <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="upG-KO-9fC">
+                                        <rect key="frame" x="45" y="299" width="329" height="34"/>
+                                        <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits"/>
+                                    </textField>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="2uR-L3-TAu">
+                                        <rect key="frame" x="164" y="400" width="75" height="35"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="gray" title="Button"/>
+                                        <connections>
+                                            <action selector="uploadButton:" destination="R6M-3i-nwE" eventType="touchUpInside" id="Ba8-3p-zIF"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <constraints>
+                                    <constraint firstItem="upG-KO-9fC" firstAttribute="leading" secondItem="6YY-V8-HVS" secondAttribute="leading" constant="45" id="7hZ-mo-cT3"/>
+                                    <constraint firstAttribute="trailing" secondItem="upG-KO-9fC" secondAttribute="trailing" constant="28" id="JlO-1a-KMB"/>
+                                    <constraint firstAttribute="trailing" secondItem="2uR-L3-TAu" secondAttribute="trailing" constant="163" id="NRT-il-hio"/>
+                                    <constraint firstItem="2uR-L3-TAu" firstAttribute="leading" secondItem="6YY-V8-HVS" secondAttribute="leading" constant="164" id="VBx-PP-hmw"/>
+                                    <constraint firstItem="upG-KO-9fC" firstAttribute="top" secondItem="CPr-q6-cIS" secondAttribute="bottom" constant="75" id="aDc-qU-llQ"/>
                                     <constraint firstItem="CPr-q6-cIS" firstAttribute="leading" secondItem="6YY-V8-HVS" secondAttribute="leading" constant="81" id="bJX-ur-rcQ"/>
                                     <constraint firstAttribute="trailing" secondItem="CPr-q6-cIS" secondAttribute="trailing" constant="81" id="euQ-d5-5ah"/>
+                                    <constraint firstItem="2uR-L3-TAu" firstAttribute="top" secondItem="upG-KO-9fC" secondAttribute="bottom" constant="67" id="hDK-4j-vr4"/>
                                     <constraint firstItem="CPr-q6-cIS" firstAttribute="top" secondItem="6YY-V8-HVS" secondAttribute="top" constant="96" id="wiC-at-atS"/>
                                 </constraints>
                             </view>
@@ -262,8 +282,10 @@
                     <connections>
                         <outlet property="containerView" destination="Zlj-q0-lCl" id="y7W-ZG-ZP4"/>
                         <outlet property="contentView" destination="6YY-V8-HVS" id="plR-Fq-dbi"/>
+                        <outlet property="descriptionTextField" destination="upG-KO-9fC" id="p95-OX-Xvx"/>
                         <outlet property="imageView" destination="CPr-q6-cIS" id="BAF-N5-H8r"/>
                         <outlet property="segmentedControl" destination="ZSC-MW-Liw" id="3fg-kb-Hos"/>
+                        <outlet property="uploadButton" destination="2uR-L3-TAu" id="7rH-se-o3K"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="23q-G3-cwO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
