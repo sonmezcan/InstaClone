@@ -11,11 +11,19 @@ import FirebaseCore
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
+    var window: UIWindow?
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         FirebaseApp.configure()
+        window = UIWindow(frame: UIScreen.main.bounds)
+                let launchVC = LaunchVC() // LaunchVC'nizi burada başlatın
+                let navigationController = UINavigationController(rootViewController: launchVC)
+                window?.rootViewController = navigationController
+                window?.makeKeyAndVisible()
+
+                
         return true
     }
 

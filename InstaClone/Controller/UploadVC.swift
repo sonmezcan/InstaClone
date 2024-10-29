@@ -2,6 +2,7 @@ import UIKit
 import AVFoundation
 import FirebaseStorage
 import FirebaseFirestore
+import FirebaseAuth
 
 class UploadVC: UIViewController {
     @IBOutlet weak var uploadButton: UIButton!
@@ -16,9 +17,11 @@ class UploadVC: UIViewController {
     
     let storage = Storage.storage()
     let db = Firestore.firestore()
+    let brain = Brain()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        brain.placeHolders(textField: descriptionTextField, placeholderText: "Add comment", placeholderColor: .gray)
         segmentedControl.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
         
         openCamera()
@@ -28,9 +31,10 @@ class UploadVC: UIViewController {
         self.containerView.addSubview(segmentedControl)
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imagePicker))
-        
         imageView.addGestureRecognizer(tapGestureRecognizer)
+        imageView.isUserInteractionEnabled = true // Kullanıcı etkileşimini etkinleştir
     }
+    
     @IBAction func uploadButton(_ sender: UIButton) {
         uploadPhoto()
     }
@@ -38,13 +42,10 @@ class UploadVC: UIViewController {
     @objc func segmentChanged(_ sender: UISegmentedControl) {
         switch sender.selectedSegmentIndex {
         case 0:
-            print("Option 1 seçildi")
-            
             hideElements(Bool: true)
             openCamera()
         case 1:
             hideElements(Bool: false)
-            imageView.isUserInteractionEnabled = true
             if imageView.image == UIImage(named: "add-icon") {
                 imagePicker()
             }
@@ -52,58 +53,48 @@ class UploadVC: UIViewController {
             break
         }
     }
-    func hideElements (Bool: Bool) {
+    
+    func hideElements(Bool: Bool) {
         imageView.isHidden = Bool
         uploadButton.isHidden = Bool
         descriptionTextField.isHidden = Bool
     }
-    func openCamera () {
-        // CaptureSession'i başlatıyoruz
+    
+    func openCamera() {
         captureSession = AVCaptureSession()
         captureSession.sessionPreset = .high
         
-        // Cihazın arka kamerasını seçiyoruz
         guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else {
             print("Kamera bulunamadı")
             return
         }
         
-        // Video girişi oluşturma
-        let videoInput: AVCaptureDeviceInput
         do {
-            videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
+            let videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
+            if captureSession.canAddInput(videoInput) {
+                captureSession.addInput(videoInput)
+            } else {
+                print("Video girişi eklenemedi")
+                return
+            }
         } catch {
             print("Kamera girişini oluşturma hatası: \(error)")
             return
         }
         
-        // CaptureSession'a video girişi ekleme
-        if captureSession.canAddInput(videoInput) {
-            captureSession.addInput(videoInput)
-        } else {
-            print("Video girişi eklenemedi")
-            return
-        }
-        
-        // Video çıktısını oluşturuyoruz
         videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewLayer.frame = contentView.bounds
-        
-        // Video görüntüsünü cameraView'e ekliyoruz
         contentView.layer.addSublayer(videoPreviewLayer)
-        
-        // Kamera görüntüsünü başlatıyoruz
         captureSession.startRunning()
     }
     
-    func uploadPhoto(){
+    func uploadPhoto() {
         guard let image = imageView.image else { return }
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-        guard let description = descriptionTextField.text else { return }
+        guard let description = descriptionTextField.text, !description.isEmpty else { return }
         
-        // Fotoğrafı Firebase Storage'a yükleyelim
-        let imageName = UUID().uuidString // Benzersiz bir isim
+        let imageName = UUID().uuidString
         let imageRef = storage.reference().child("images/\(imageName).jpg")
         
         imageRef.putData(imageData, metadata: nil) { metadata, error in
@@ -112,18 +103,18 @@ class UploadVC: UIViewController {
                 return
             }
             
-            // Fotoğrafın URL'sini alalım
             imageRef.downloadURL { url, error in
                 guard let downloadURL = url else {
                     print("URL alınamadı: \(String(describing: error))")
                     return
                 }
                 
-                // Firestore'a açıklama ve tarih bilgisiyle birlikte kaydedelim
                 self.db.collection("posts").addDocument(data: [
-                    "imageURL": downloadURL.absoluteString,
+                    "imageURL": downloadURL.absoluteString, // Anahtar ismi düzeltildi
                     "description": description,
-                    "timestamp": Timestamp(date: Date())
+                    "timestamp": Timestamp(date: Date()),
+                    "postedBy": Auth.auth().currentUser!.email!,
+                    "likes": 0
                 ]) { error in
                     if let error = error {
                         print("Veritabanına kaydedilemedi: \(error)")
@@ -137,32 +128,24 @@ class UploadVC: UIViewController {
     }
 }
 
-
-
-
 //MARK: - Picker
-extension UploadVC:  UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+extension UploadVC: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        // Seçilen fotoğrafı al
         if let selectedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
-            imageView.image = selectedImage // Seçilen resmi UIImageView'a atıyoruz
+            imageView.image = selectedImage
         }
-        
-        // Fotoğraf seçiciyi kapat
         dismiss(animated: true, completion: nil)
     }
     
-    // Kullanıcı iptal ederse bu fonksiyon tetiklenir
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true, completion: nil) // Fotoğraf seçiciyi kapat
+        dismiss(animated: true, completion: nil)
     }
+    
     @objc func imagePicker() {
         let imagePickerController = UIImagePickerController()
         imagePickerController.sourceType = .photoLibrary
         imagePickerController.delegate = self
-        imagePickerController.allowsEditing = false // Fotoğrafın kırpılmasına izin vermiyoruz
-        
-        // Fotoğraf seçici ekranını göster
+        imagePickerController.allowsEditing = false
         present(imagePickerController, animated: true, completion: nil)
     }
 }

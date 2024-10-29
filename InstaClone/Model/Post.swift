@@ -11,4 +11,6 @@ struct Post {
     let imageURL: String
     let description: String
     let timestamp: Date
+    let postedBy: String
+    let likes: Int
 }
