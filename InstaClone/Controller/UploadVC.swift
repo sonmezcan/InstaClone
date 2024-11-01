@@ -114,7 +114,7 @@ class UploadVC: UIViewController {
                     "description": description,
                     "timestamp": Timestamp(date: Date()),
                     "postedBy": Auth.auth().currentUser!.email!,
-                    "likes": 0
+                    
                 ]) { error in
                     if let error = error {
                         print("Veritabanına kaydedilemedi: \(error)")
