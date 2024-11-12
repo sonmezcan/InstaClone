@@ -40,12 +40,12 @@ class FeedCell: UITableViewCell {
 //        }else {
 //            likeButton.setImage(UIImage(systemName: "heart"), for: .normal)
 //        }
-        let fireStoreDatabase = Firestore.firestore()
-        if let likeCount = Int(likeCounter.text!) {
-            let likeStore = ["likes" : likeCount + 1 ] as [String : Any]
-            fireStoreDatabase.collection("posts").document(documentIdLabel.text!).setData(likeStore, merge: true)
-        }
-       
+//        let fireStoreDatabase = Firestore.firestore()
+//        if let likeCount = Int(likeCounter.text!) {
+//            let likeStore = ["likes" : likeCount + 1 ] as [String : Any]
+//            fireStoreDatabase.collection("posts").document(documentIdLabel.text!).setData(likeStore, merge: true)
+//        }
+//       
         
     }
     

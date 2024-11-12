@@ -346,13 +346,113 @@
                     </view>
                     <tabBarItem key="tabBarItem" title="Home" image="house" catalog="system" id="dMj-RT-LKa"/>
                     <connections>
-                        <outlet property="likeButtonImg" destination="LpF-v6-i9d" id="Mf0-kA-CTq"/>
                         <outlet property="tableView" destination="Cz8-Mt-McT" id="VUY-8Y-H1p"/>
+                        <segue destination="0Ne-ea-Xgf" kind="presentation" identifier="toCommentVC" id="dIi-UU-ySF"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="83m-ka-Hre" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="995.52238805970148" y="-693.36384439359267"/>
+        </scene>
+        <!--CommentVC-->
+        <scene sceneID="2BX-KP-rMB">
+            <objects>
+                <viewController id="0Ne-ea-Xgf" customClass="CommentVC" customModule="InstaClone" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="kyQ-AG-ZVq">
+                        <rect key="frame" x="0.0" y="0.0" width="402" height="864"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="-1" estimatedSectionHeaderHeight="-1" sectionFooterHeight="-1" estimatedSectionFooterHeight="-1" translatesAutoresizingMaskIntoConstraints="NO" id="VDC-j0-gsM">
+                                <rect key="frame" x="0.0" y="0.0" width="402" height="784"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <prototypes>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="CommentCell" rowHeight="75" id="ohC-6x-ELN" customClass="CommentCell" customModule="InstaClone" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="50" width="402" height="75"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="ohC-6x-ELN" id="gnl-NI-akl">
+                                            <rect key="frame" x="0.0" y="0.0" width="402" height="75"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="app-icon" translatesAutoresizingMaskIntoConstraints="NO" id="2Ud-wR-4ZQ">
+                                                    <rect key="frame" x="20" y="11" width="50" height="50"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="30" id="Aqf-Ex-Rwd"/>
+                                                        <constraint firstAttribute="width" constant="50" id="C5v-3k-xSE"/>
+                                                        <constraint firstAttribute="height" constant="50" id="byK-db-cb1"/>
+                                                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="30" id="lHA-Bp-DQ9"/>
+                                                    </constraints>
+                                                    <userDefinedRuntimeAttributes>
+                                                        <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                            <integer key="value" value="25"/>
+                                                        </userDefinedRuntimeAttribute>
+                                                        <userDefinedRuntimeAttribute type="boolean" keyPath="clipsToBounds" value="YES"/>
+                                                    </userDefinedRuntimeAttributes>
+                                                </imageView>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8s1-rB-jXD">
+                                                    <rect key="frame" x="78" y="26" width="304" height="20.333333333333329"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="8s1-rB-jXD" firstAttribute="trailing" secondItem="gnl-NI-akl" secondAttribute="trailingMargin" id="34G-IZ-otP"/>
+                                                <constraint firstItem="2Ud-wR-4ZQ" firstAttribute="top" secondItem="gnl-NI-akl" secondAttribute="topMargin" id="DOf-nJ-VLC"/>
+                                                <constraint firstItem="2Ud-wR-4ZQ" firstAttribute="leading" secondItem="gnl-NI-akl" secondAttribute="leadingMargin" id="H7G-hA-Kp1"/>
+                                                <constraint firstItem="8s1-rB-jXD" firstAttribute="top" secondItem="gnl-NI-akl" secondAttribute="topMargin" constant="15" id="R9U-zI-5KJ"/>
+                                                <constraint firstItem="8s1-rB-jXD" firstAttribute="leading" secondItem="2Ud-wR-4ZQ" secondAttribute="trailing" constant="8" symbolic="YES" id="gu4-ge-PlQ"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <outlet property="userAvatar" destination="2Ud-wR-4ZQ" id="htI-bd-lhb"/>
+                                            <outlet property="userComment" destination="8s1-rB-jXD" id="xCp-0p-seH"/>
+                                        </connections>
+                                    </tableViewCell>
+                                </prototypes>
+                            </tableView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="app-icon" translatesAutoresizingMaskIntoConstraints="NO" id="PJN-vI-I7Q">
+                                <rect key="frame" x="15" y="799" width="50" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="50" id="Ft1-o7-bEw"/>
+                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="50" id="VRw-He-lz0"/>
+                                    <constraint firstAttribute="height" constant="50" id="oh8-Tz-KpB"/>
+                                </constraints>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="25"/>
+                                    </userDefinedRuntimeAttribute>
+                                    <userDefinedRuntimeAttribute type="boolean" keyPath="clipsToBounds" value="YES"/>
+                                </userDefinedRuntimeAttributes>
+                            </imageView>
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Add comment..." textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="OyI-XN-gPG">
+                                <rect key="frame" x="73" y="807" width="319" height="34"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="Akv-hS-2YE"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="VDC-j0-gsM" firstAttribute="top" secondItem="kyQ-AG-ZVq" secondAttribute="top" id="3HS-0w-1GJ"/>
+                            <constraint firstAttribute="bottom" secondItem="PJN-vI-I7Q" secondAttribute="bottom" constant="15" id="8Jc-8k-lIv"/>
+                            <constraint firstAttribute="bottom" secondItem="VDC-j0-gsM" secondAttribute="bottom" constant="80" id="Jjg-kU-qhr"/>
+                            <constraint firstItem="VDC-j0-gsM" firstAttribute="trailing" secondItem="Akv-hS-2YE" secondAttribute="trailing" id="R15-Lj-AZf"/>
+                            <constraint firstItem="PJN-vI-I7Q" firstAttribute="leading" secondItem="kyQ-AG-ZVq" secondAttribute="leading" constant="15" id="n9k-yu-fZ9"/>
+                            <constraint firstItem="Akv-hS-2YE" firstAttribute="trailing" secondItem="OyI-XN-gPG" secondAttribute="trailing" constant="10" id="ntL-v4-no4"/>
+                            <constraint firstItem="OyI-XN-gPG" firstAttribute="leading" secondItem="PJN-vI-I7Q" secondAttribute="trailing" constant="8" symbolic="YES" id="oeP-NW-7i5"/>
+                            <constraint firstAttribute="bottom" secondItem="OyI-XN-gPG" secondAttribute="bottom" constant="23" id="oyC-p5-FIe"/>
+                            <constraint firstItem="VDC-j0-gsM" firstAttribute="leading" secondItem="Akv-hS-2YE" secondAttribute="leading" id="qX5-Cw-A3D"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="mainAvatar" destination="PJN-vI-I7Q" id="XRg-a9-OLH"/>
+                        <outlet property="mainCommentField" destination="OyI-XN-gPG" id="VJt-7b-d6U"/>
+                        <outlet property="tableView" destination="VDC-j0-gsM" id="Vmr-Vz-uTE"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Ffo-r4-TJ6" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1771.641791044776" y="-693.36384439359267"/>
         </scene>
         <!--Upload-->
         <scene sceneID="kSf-gR-bJb">

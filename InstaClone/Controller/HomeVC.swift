@@ -22,7 +22,7 @@ class HomeVC: UIViewController {
     }
     
     @IBAction func commentButtonPressed(_ sender: UIButton) {
-        // Yorum butonuna tıklama eylemi
+        performSegue(withIdentifier: "toCommentVC", sender: nil)
     }
     
     @IBAction func likeButton(_ sender: UIButton) {
