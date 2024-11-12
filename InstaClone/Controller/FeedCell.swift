@@ -35,17 +35,7 @@ class FeedCell: UITableViewCell {
         
     }
     @IBAction func likePressed(_ sender: UIButton) {
-//        if likeButton.currentImage == UIImage(systemName: "heart") {
-//            likeButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-//        }else {
-//            likeButton.setImage(UIImage(systemName: "heart"), for: .normal)
-//        }
-//        let fireStoreDatabase = Firestore.firestore()
-//        if let likeCount = Int(likeCounter.text!) {
-//            let likeStore = ["likes" : likeCount + 1 ] as [String : Any]
-//            fireStoreDatabase.collection("posts").document(documentIdLabel.text!).setData(likeStore, merge: true)
-//        }
-//       
+
         
     }
     
