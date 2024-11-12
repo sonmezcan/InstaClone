@@ -4,7 +4,6 @@ import SDWebImage
 import FirebaseAuth
 
 class HomeVC: UIViewController {
-    
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var likeButtonImg: UIButton!
     
@@ -22,7 +21,17 @@ class HomeVC: UIViewController {
     }
     
     @IBAction func commentButtonPressed(_ sender: UIButton) {
-        performSegue(withIdentifier: "toCommentVC", sender: nil)
+        performSegue(withIdentifier: "toCommentVC", sender: sender) // Sender olarak button'u gönderiyoruz
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "toCommentVC",
+           let destinationVC = segue.destination as? CommentVC,
+           let button = sender as? UIButton,
+           let cell = button.superview?.superview as? FeedCell,
+           let indexPath = tableView.indexPath(for: cell) {
+            destinationVC.postId = documentIdArray[indexPath.row] // CommentVC'ye gönderi ID'sini aktarma
+        }
     }
     
     @IBAction func likeButton(_ sender: UIButton) {

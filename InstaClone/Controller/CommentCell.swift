@@ -8,6 +8,7 @@
 import UIKit
 
 class CommentCell: UITableViewCell {
+    @IBOutlet weak var userNameLabel: UILabel!
     @IBOutlet weak var userComment: UILabel!
     @IBOutlet weak var userAvatar: UIImageView!
     
@@ -16,6 +17,10 @@ class CommentCell: UITableViewCell {
         // Initialization code
     }
 
+    func configure(with comment: String, userName: String) {
+            userComment.text = comment
+        userNameLabel.text = userName
+        }
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
 

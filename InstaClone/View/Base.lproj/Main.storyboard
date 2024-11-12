@@ -388,15 +388,29 @@
                                                         <userDefinedRuntimeAttribute type="boolean" keyPath="clipsToBounds" value="YES"/>
                                                     </userDefinedRuntimeAttributes>
                                                 </imageView>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8s1-rB-jXD">
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Comment Label" textAlignment="natural" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8s1-rB-jXD">
                                                     <rect key="frame" x="78" y="26" width="304" height="20.333333333333329"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YYf-BG-lXV">
+                                                    <rect key="frame" x="78" y="11" width="94" height="23"/>
+                                                    <attributedString key="attributedText">
+                                                        <fragment content="Username">
+                                                            <attributes>
+                                                                <font key="NSFont" size="18" name="AmericanTypewriter-Bold"/>
+                                                                <font key="NSOriginalFont" size="18" name="AlBayan-Bold"/>
+                                                            </attributes>
+                                                        </fragment>
+                                                    </attributedString>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
                                             </subviews>
                                             <constraints>
                                                 <constraint firstItem="8s1-rB-jXD" firstAttribute="trailing" secondItem="gnl-NI-akl" secondAttribute="trailingMargin" id="34G-IZ-otP"/>
+                                                <constraint firstItem="YYf-BG-lXV" firstAttribute="top" secondItem="gnl-NI-akl" secondAttribute="topMargin" id="5Pw-7X-BuW"/>
+                                                <constraint firstItem="YYf-BG-lXV" firstAttribute="leading" secondItem="2Ud-wR-4ZQ" secondAttribute="trailing" constant="8" symbolic="YES" id="9AQ-Rw-Rlo"/>
                                                 <constraint firstItem="2Ud-wR-4ZQ" firstAttribute="top" secondItem="gnl-NI-akl" secondAttribute="topMargin" id="DOf-nJ-VLC"/>
                                                 <constraint firstItem="2Ud-wR-4ZQ" firstAttribute="leading" secondItem="gnl-NI-akl" secondAttribute="leadingMargin" id="H7G-hA-Kp1"/>
                                                 <constraint firstItem="8s1-rB-jXD" firstAttribute="top" secondItem="gnl-NI-akl" secondAttribute="topMargin" constant="15" id="R9U-zI-5KJ"/>
@@ -406,6 +420,7 @@
                                         <connections>
                                             <outlet property="userAvatar" destination="2Ud-wR-4ZQ" id="htI-bd-lhb"/>
                                             <outlet property="userComment" destination="8s1-rB-jXD" id="xCp-0p-seH"/>
+                                            <outlet property="userNameLabel" destination="YYf-BG-lXV" id="ehx-Xh-mkQ"/>
                                         </connections>
                                     </tableViewCell>
                                 </prototypes>
@@ -425,20 +440,31 @@
                                 </userDefinedRuntimeAttributes>
                             </imageView>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Add comment..." textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="OyI-XN-gPG">
-                                <rect key="frame" x="73" y="807" width="319" height="34"/>
+                                <rect key="frame" x="73" y="807" width="259" height="34"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="DlJ-zH-a0d">
+                                <rect key="frame" x="340" y="807" width="46" height="34.333333333333371"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="gray" image="paperplane" catalog="system"/>
+                                <connections>
+                                    <action selector="sendButton:" destination="0Ne-ea-Xgf" eventType="touchUpInside" id="zc1-r2-dPS"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Akv-hS-2YE"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="VDC-j0-gsM" firstAttribute="top" secondItem="kyQ-AG-ZVq" secondAttribute="top" id="3HS-0w-1GJ"/>
+                            <constraint firstItem="Akv-hS-2YE" firstAttribute="trailing" secondItem="DlJ-zH-a0d" secondAttribute="trailing" constant="16" id="49A-NH-eY2"/>
                             <constraint firstAttribute="bottom" secondItem="PJN-vI-I7Q" secondAttribute="bottom" constant="15" id="8Jc-8k-lIv"/>
                             <constraint firstAttribute="bottom" secondItem="VDC-j0-gsM" secondAttribute="bottom" constant="80" id="Jjg-kU-qhr"/>
                             <constraint firstItem="VDC-j0-gsM" firstAttribute="trailing" secondItem="Akv-hS-2YE" secondAttribute="trailing" id="R15-Lj-AZf"/>
+                            <constraint firstItem="DlJ-zH-a0d" firstAttribute="leading" secondItem="OyI-XN-gPG" secondAttribute="trailing" constant="8" symbolic="YES" id="gfk-0F-yU5"/>
+                            <constraint firstItem="DlJ-zH-a0d" firstAttribute="top" secondItem="VDC-j0-gsM" secondAttribute="bottom" constant="23" id="j22-20-Xtj"/>
                             <constraint firstItem="PJN-vI-I7Q" firstAttribute="leading" secondItem="kyQ-AG-ZVq" secondAttribute="leading" constant="15" id="n9k-yu-fZ9"/>
-                            <constraint firstItem="Akv-hS-2YE" firstAttribute="trailing" secondItem="OyI-XN-gPG" secondAttribute="trailing" constant="10" id="ntL-v4-no4"/>
+                            <constraint firstItem="Akv-hS-2YE" firstAttribute="trailing" secondItem="OyI-XN-gPG" secondAttribute="trailing" constant="70" id="ntL-v4-no4"/>
                             <constraint firstItem="OyI-XN-gPG" firstAttribute="leading" secondItem="PJN-vI-I7Q" secondAttribute="trailing" constant="8" symbolic="YES" id="oeP-NW-7i5"/>
                             <constraint firstAttribute="bottom" secondItem="OyI-XN-gPG" secondAttribute="bottom" constant="23" id="oyC-p5-FIe"/>
                             <constraint firstItem="VDC-j0-gsM" firstAttribute="leading" secondItem="Akv-hS-2YE" secondAttribute="leading" id="qX5-Cw-A3D"/>
@@ -627,6 +653,7 @@
         <image name="house" catalog="system" width="128" height="104"/>
         <image name="logo" width="679" height="679"/>
         <image name="message" catalog="system" width="128" height="116"/>
+        <image name="paperplane" catalog="system" width="128" height="119"/>
         <image name="person.crop.circle" catalog="system" width="128" height="123"/>
         <image name="plus" catalog="system" width="128" height="113"/>
         <systemColor name="labelColor">
