@@ -6,6 +6,7 @@ import FirebaseAuth
 class HomeVC: UIViewController {
     
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var likeButtonImg: UIButton!
     
     var userEmailArray = [String]()
     var userCommentArray = [String]()
@@ -33,6 +34,7 @@ class HomeVC: UIViewController {
             toggleLike(postId: postId, userId: userId, index: indexPath.row)
         }
     }
+    
     func getDataFromFirestore() {
         let fireStoreDatabase = Firestore.firestore()
         
@@ -115,6 +117,7 @@ class HomeVC: UIViewController {
                     // Kullanıcı beğeniyi ekle
                     likedBy.append(userId)
                     likeCount += 1
+                    
                 }
 
                 likesRef.setData([
@@ -144,6 +147,7 @@ class HomeVC: UIViewController {
             }
         }
     }
+    
     func updateLikeCount(for index: Int) {
         let postId = documentIdArray[index]
         let likesRef = Firestore.firestore().collection("likes").document(postId)
@@ -156,26 +160,26 @@ class HomeVC: UIViewController {
         }
     }
 }
+
+extension HomeVC: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return userEmailArray.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
         
-        extension HomeVC: UITableViewDelegate, UITableViewDataSource {
-            func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-                return userEmailArray.count
-            }
-            
-            func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-                let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
-                
-                cell.userLabel.text = userEmailArray[indexPath.row]
-                cell.likeCounter.text = "\(likeArray[indexPath.row])"
-                cell.userComment.text = userCommentArray[indexPath.row]
-                cell.documentIdLabel.text = documentIdArray[indexPath.row]
-                
-                if let imageUrl = URL(string: userImageArray[indexPath.row]) {
-                    cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
-                } else {
-                    cell.userImage.image = UIImage(named: "placeholder")
-                }
-                
-                return cell
-            }
+        cell.userLabel.text = userEmailArray[indexPath.row]
+        cell.likeCounter.text = "\(likeArray[indexPath.row])"
+        cell.userComment.text = userCommentArray[indexPath.row]
+        cell.documentIdLabel.text = documentIdArray[indexPath.row]
+        
+        if let imageUrl = URL(string: userImageArray[indexPath.row]) {
+            cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
+        } else {
+            cell.userImage.image = UIImage(named: "placeholder")
         }
+        
+        return cell
+    }
+}
