@@ -6,11 +6,12 @@
 //
 
 import Foundation
+import FirebaseCore
 
 struct Post {
-    let imageURL: String
-    let description: String
-    let timestamp: Date
-    let postedBy: String
-    let likes: Int
+    var imageURL: String
+    var description: String
+    var userPhotoURL: String
+    var postedBy: String
+    var timestamp: Timestamp
 }

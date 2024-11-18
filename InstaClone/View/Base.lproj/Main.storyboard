@@ -589,6 +589,19 @@
                                     <action selector="logOut:" destination="9Ug-gT-VOF" eventType="touchUpInside" id="buy-nr-e21"/>
                                 </connections>
                             </button>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="default" translatesAutoresizingMaskIntoConstraints="NO" id="FoI-6R-7v7">
+                                <rect key="frame" x="81" y="125" width="240" height="170"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uYp-ZW-IGc">
+                                <rect key="frame" x="111" y="374" width="182" height="35"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" title="Update Profile Photo"/>
+                                <connections>
+                                    <action selector="updatePhotoPressed:" destination="9Ug-gT-VOF" eventType="touchUpInside" id="AsX-ts-9N9"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="mcB-pI-bqL"/>
                         <color key="backgroundColor" systemColor="labelColor"/>
@@ -599,10 +612,13 @@
                         </constraints>
                     </view>
                     <tabBarItem key="tabBarItem" title="Profile" image="person.crop.circle" catalog="system" id="4EX-aT-YUM"/>
+                    <connections>
+                        <outlet property="profilePhoto" destination="FoI-6R-7v7" id="CAW-0V-KEP"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OIl-Wy-W7h" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="996" y="760"/>
+            <point key="canvasLocation" x="995.52238805970148" y="759.95423340961088"/>
         </scene>
         <!--Tab Bar Controller-->
         <scene sceneID="VR7-HP-jKR">
@@ -649,6 +665,7 @@
     <resources>
         <image name="add-icon" width="2048" height="2048"/>
         <image name="app-icon" width="512" height="512"/>
+        <image name="default" width="340" height="340"/>
         <image name="heart" catalog="system" width="128" height="107"/>
         <image name="house" catalog="system" width="128" height="104"/>
         <image name="logo" width="679" height="679"/>

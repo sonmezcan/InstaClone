@@ -25,7 +25,7 @@ class UploadVC: UIViewController {
         segmentedControl.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
         
         openCamera()
-        hideElements(Bool: true)
+        hideElements(shouldHide: true)
         segmentedControl.selectedSegmentIndex = 0
         segmentedControl.addTarget(self, action: #selector(segmentChanged(_:)), for: .valueChanged)
         self.containerView.addSubview(segmentedControl)
@@ -35,6 +35,11 @@ class UploadVC: UIViewController {
         imageView.isUserInteractionEnabled = true // Kullanıcı etkileşimini etkinleştir
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        captureSession.stopRunning()  // Kamera sesi kapanırken durdurulmalı
+    }
+    
     @IBAction func uploadButton(_ sender: UIButton) {
         uploadPhoto()
     }
@@ -42,10 +47,10 @@ class UploadVC: UIViewController {
     @objc func segmentChanged(_ sender: UISegmentedControl) {
         switch sender.selectedSegmentIndex {
         case 0:
-            hideElements(Bool: true)
+            hideElements(shouldHide: true)
             openCamera()
         case 1:
-            hideElements(Bool: false)
+            hideElements(shouldHide: false)
             if imageView.image == UIImage(named: "add-icon") {
                 imagePicker()
             }
@@ -54,10 +59,10 @@ class UploadVC: UIViewController {
         }
     }
     
-    func hideElements(Bool: Bool) {
-        imageView.isHidden = Bool
-        uploadButton.isHidden = Bool
-        descriptionTextField.isHidden = Bool
+    func hideElements(shouldHide: Bool) {
+        imageView.isHidden = shouldHide
+        uploadButton.isHidden = shouldHide
+        descriptionTextField.isHidden = shouldHide
     }
     
     func openCamera() {
@@ -90,9 +95,18 @@ class UploadVC: UIViewController {
     }
     
     func uploadPhoto() {
-        guard let image = imageView.image else { return }
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-        guard let description = descriptionTextField.text, !description.isEmpty else { return }
+        guard let image = imageView.image else {
+            showError(message: "Please select an image.")
+            return
+        }
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            showError(message: "Failed to process image.")
+            return
+        }
+        guard let description = descriptionTextField.text, !description.isEmpty else {
+            showError(message: "Please provide a description.")
+            return
+        }
         
         let imageName = UUID().uuidString
         let imageRef = storage.reference().child("images/\(imageName).jpg")
@@ -108,13 +122,29 @@ class UploadVC: UIViewController {
                     print("URL alınamadı: \(String(describing: error))")
                     return
                 }
+
+                // Profil fotoğrafı URL'sini Firestore'a kaydedin
+                guard let user = Auth.auth().currentUser else { return }
+                let userProfilePhotoURL = user.photoURL?.absoluteString ?? ""
+                let postedBy = user.email ?? "Unknown User"  // Fallback if the email is nil
                 
+                // 'Post' modelini kullanarak veri kaydedelim
+                let post = Post(
+                    imageURL: downloadURL.absoluteString,
+                    description: description,
+                    userPhotoURL: userProfilePhotoURL,
+                    postedBy: postedBy,
+                    timestamp: Timestamp(date: Date())
+                )
+                
+                // Veriyi Firestore'a ekleyelim
                 self.db.collection("posts").addDocument(data: [
-                    "imageURL": downloadURL.absoluteString, // Anahtar ismi düzeltildi
-                    "description": description,
-                    "timestamp": Timestamp(date: Date()),
-                    "postedBy": Auth.auth().currentUser!.email!,
-                    
+                    "imageURL": post.imageURL,
+                    "description": post.description,
+                    "timestamp": post.timestamp,
+                    "postedBy": post.postedBy,
+                    "uid": user.uid,
+                    "userPhotoURL": post.userPhotoURL
                 ]) { error in
                     if let error = error {
                         print("Veritabanına kaydedilemedi: \(error)")
@@ -125,6 +155,12 @@ class UploadVC: UIViewController {
                 }
             }
         }
+    }
+    
+    func showError(message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
     }
 }
 
