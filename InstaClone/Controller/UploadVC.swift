@@ -41,7 +41,7 @@ class UploadVC: UIViewController {
     }
     
     @IBAction func uploadButton(_ sender: UIButton) {
-        uploadPhoto()
+        uploadPost() // uploadPost fonksiyonunu çağırıyoruz
     }
     
     @objc func segmentChanged(_ sender: UISegmentedControl) {
@@ -94,7 +94,8 @@ class UploadVC: UIViewController {
         captureSession.startRunning()
     }
     
-    func uploadPhoto() {
+    // uploadPost fonksiyonunu entegre ettik
+    func uploadPost() {
         guard let image = imageView.image else {
             showError(message: "Please select an image.")
             return
@@ -114,18 +115,20 @@ class UploadVC: UIViewController {
         imageRef.putData(imageData, metadata: nil) { metadata, error in
             guard error == nil else {
                 print("Fotoğraf yüklenirken hata oluştu: \(String(describing: error))")
+                self.showError(message: "Failed to upload image. Please try again.")
                 return
             }
             
             imageRef.downloadURL { url, error in
                 guard let downloadURL = url else {
                     print("URL alınamadı: \(String(describing: error))")
+                    self.showError(message: "Failed to retrieve image URL.")
                     return
                 }
 
                 // Profil fotoğrafı URL'sini Firestore'a kaydedin
                 guard let user = Auth.auth().currentUser else { return }
-                let userProfilePhotoURL = user.photoURL?.absoluteString ?? ""
+                let userProfilePhotoURL = user.photoURL?.absoluteString ?? "https://your-default-photo-url.com"
                 let postedBy = user.email ?? "Unknown User"  // Fallback if the email is nil
                 
                 // 'Post' modelini kullanarak veri kaydedelim
@@ -148,6 +151,7 @@ class UploadVC: UIViewController {
                 ]) { error in
                     if let error = error {
                         print("Veritabanına kaydedilemedi: \(error)")
+                        self.showError(message: "Failed to save post. Please try again.")
                     } else {
                         print("Fotoğraf başarıyla yüklendi ve Firestore'a kaydedildi!")
                         self.tabBarController?.selectedIndex = 0

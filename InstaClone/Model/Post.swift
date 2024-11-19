@@ -1,12 +1,6 @@
-//
-//  Post.swift
-//  InstaClone
-//
-//  Created by can on 24.10.2024.
-//
-
 import Foundation
 import FirebaseCore
+import FirebaseFirestore
 
 struct Post {
     var imageURL: String
@@ -14,4 +8,9 @@ struct Post {
     var userPhotoURL: String
     var postedBy: String
     var timestamp: Timestamp
+
+    // Post modeline Firebase'den veri alırken timestamp verisini Date'e dönüştürme
+    var date: Date {
+        return timestamp.dateValue()
+    }
 }
