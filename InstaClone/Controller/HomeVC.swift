@@ -64,8 +64,8 @@ class HomeVC: UIViewController {
             for doc in documents {
                 let docId = doc.documentID
                 
-                group.enter()
-
+                group.enter() // Start async task
+                
                 if let postedBy = doc.get("postedBy") as? String,
                    let description = doc.get("description") as? String,
                    let imageUrl = doc.get("imageURL") as? String,
@@ -81,11 +81,23 @@ class HomeVC: UIViewController {
                     self.userImageArray.append(post.imageURL)
                     self.documentIdArray.append(docId)
                     self.userProfilePhotoArray.append(post.userPhotoURL)
+                    
+                    // Beğeni sayısını 0 olarak ekle (Varsayılan değer)
+                    self.likeArray.append(0)
+                    
+                    // Beğeni sayısını Firestore'dan çek
+                    self.getLikesCount(forPostId: docId) { likeCount in
+                        // Beğeni sayısını `likeArray` dizisinde ilgili post için güncelle
+                        if let index = self.documentIdArray.firstIndex(of: docId) {
+                            self.likeArray[index] = likeCount
+                        }
+                        
+                        group.leave() // End async task after getting like count
+                    }
                 }
-
-                group.leave()
             }
-
+            
+            // When all async tasks are done, reload the UI
             group.notify(queue: .main) {
                 self.updateUIWithPosts()
             }
@@ -119,34 +131,30 @@ extension HomeVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
 
-            // Diğer alanları doldur
-            cell.userLabel.text = userEmailArray[indexPath.row]
-            cell.userComment.text = userCommentArray[indexPath.row]
-            cell.documentIdLabel.text = documentIdArray[indexPath.row]
+           // Diğer alanları doldur
+           cell.userLabel.text = userEmailArray[indexPath.row]
+           cell.userComment.text = userCommentArray[indexPath.row]
+           cell.documentIdLabel.text = documentIdArray[indexPath.row]
 
-            // Beğeni sayısı, eğer `likeArray` boşsa 0 olarak ayarlanabilir
-            if likeArray.count > indexPath.row {
-                cell.likeCounter.text = "\(likeArray[indexPath.row])"
-            } else {
-                cell.likeCounter.text = "0" // Eğer likeArray'de veri yoksa, 0 göster
-            }
+           // Beğeni sayısı, eğer `likeArray` boşsa 0 olarak ayarlanabilir
+           cell.likeCounter.text = "\(likeArray[indexPath.row])"
 
-            // Profil fotoğrafı ve diğer içerikleri yükle
-            let profilePhotoUrlString = userProfilePhotoArray[indexPath.row]
-            if !profilePhotoUrlString.isEmpty, let profilePhotoUrl = URL(string: profilePhotoUrlString) {
-                cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
-            } else {
-                cell.userAvatar.image = UIImage(named: "defaultProfile")
-            }
+           // Profil fotoğrafı ve diğer içerikleri yükle
+           let profilePhotoUrlString = userProfilePhotoArray[indexPath.row]
+           if !profilePhotoUrlString.isEmpty, let profilePhotoUrl = URL(string: profilePhotoUrlString) {
+               cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
+           } else {
+               cell.userAvatar.image = UIImage(named: "defaultProfile")
+           }
 
-            let imageUrlString = userImageArray[indexPath.row]
-            if !imageUrlString.isEmpty, let imageUrl = URL(string: imageUrlString) {
-                cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
-            } else {
-                cell.userImage.image = UIImage(named: "placeholder")
-            }
+           let imageUrlString = userImageArray[indexPath.row]
+           if !imageUrlString.isEmpty, let imageUrl = URL(string: imageUrlString) {
+               cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
+           } else {
+               cell.userImage.image = UIImage(named: "placeholder")
+           }
 
-            return cell
+           return cell
     }
 }
 
@@ -168,13 +176,13 @@ extension HomeVC {
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Beğeniler alınırken hata oluştu: \(error)")
-                completion(0)
+                print("Error getting likes: \(error)")
+                completion(0)  // Hata durumunda beğeni sayısını 0 olarak döndür
             } else if let document = document, document.exists {
                 let likeCount = document.data()?["likeCount"] as? Int ?? 0
-                completion(likeCount)
+                completion(likeCount)  // Beğeni sayısını döndür
             } else {
-                completion(0)
+                completion(0)  // Belirtilen postun verisi yoksa beğeni sayısını 0 olarak döndür
             }
         }
     }
