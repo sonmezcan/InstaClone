@@ -4,7 +4,7 @@ import FirebaseStorage
 import FirebaseFirestore
 import FirebaseAuth
 
-class UploadVC: UIViewController {
+class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var uploadButton: UIButton!
     @IBOutlet weak var segmentedControl: UISegmentedControl!
     @IBOutlet weak var contentView: UIView!
@@ -13,7 +13,9 @@ class UploadVC: UIViewController {
     @IBOutlet weak var descriptionTextField: UITextField!
     
     var captureSession: AVCaptureSession!
-    var videoPreviewLayer: AVCaptureVideoPreviewLayer!
+    var photoOutput: AVCapturePhotoOutput!
+    var previewLayer: AVCaptureVideoPreviewLayer!
+    var capturedImageView: UIImageView!
     
     let storage = Storage.storage()
     let db = Firestore.firestore()
@@ -21,34 +23,38 @@ class UploadVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        
+        
         brain.placeHolders(textField: descriptionTextField, placeholderText: "Add comment", placeholderColor: .gray)
         segmentedControl.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
         
-        openCamera()
+        
         hideElements(shouldHide: true)
-        segmentedControl.selectedSegmentIndex = 0
+        segmentedControl.selectedSegmentIndex = 1
         segmentedControl.addTarget(self, action: #selector(segmentChanged(_:)), for: .valueChanged)
         self.containerView.addSubview(segmentedControl)
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imagePicker))
         imageView.addGestureRecognizer(tapGestureRecognizer)
-        imageView.isUserInteractionEnabled = true // Kullanıcı etkileşimini etkinleştir
+        imageView.isUserInteractionEnabled = true
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        captureSession.stopRunning()  // Kamera sesi kapanırken durdurulmalı
+        captureSession.stopRunning()
     }
     
     @IBAction func uploadButton(_ sender: UIButton) {
-        uploadPost() // uploadPost fonksiyonunu çağırıyoruz
+        uploadPost()
     }
     
     @objc func segmentChanged(_ sender: UISegmentedControl) {
         switch sender.selectedSegmentIndex {
         case 0:
             hideElements(shouldHide: true)
-            openCamera()
+            setupCamera()
+            setupCaptureButton()
         case 1:
             hideElements(shouldHide: false)
             if imageView.image == UIImage(named: "add-icon") {
@@ -65,36 +71,96 @@ class UploadVC: UIViewController {
         descriptionTextField.isHidden = shouldHide
     }
     
-    func openCamera() {
-        captureSession = AVCaptureSession()
-        captureSession.sessionPreset = .high
+    func setupCamera() {
         
-        guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else {
-            print("Kamera bulunamadı")
+        captureSession = AVCaptureSession()
+        captureSession.sessionPreset = .photo
+        
+        // Arka kamerayı ayarla
+        guard let backCamera = AVCaptureDevice.default(for: .video) else {
+            print("Kamera bulunamadı.")
             return
         }
         
         do {
-            let videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
-            if captureSession.canAddInput(videoInput) {
-                captureSession.addInput(videoInput)
-            } else {
-                print("Video girişi eklenemedi")
-                return
-            }
+            let input = try AVCaptureDeviceInput(device: backCamera)
+            captureSession.addInput(input)
         } catch {
-            print("Kamera girişini oluşturma hatası: \(error)")
+            print("Kamera girişini eklerken hata: \(error)")
             return
         }
         
-        videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        videoPreviewLayer.videoGravity = .resizeAspectFill
-        videoPreviewLayer.frame = contentView.bounds
-        contentView.layer.addSublayer(videoPreviewLayer)
+        
+        photoOutput = AVCapturePhotoOutput()
+        if captureSession.canAddOutput(photoOutput) {
+            captureSession.addOutput(photoOutput)
+        }
+        
+        
+        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.videoGravity = .resizeAspectFill
+        previewLayer.frame = contentView.bounds
+        contentView.layer.addSublayer(previewLayer)
+        
+        
         captureSession.startRunning()
     }
     
-    // uploadPost fonksiyonunu entegre ettik
+    func setupCaptureButton() {
+        
+        let photoButton = UIButton(type: .system)
+        photoButton.setTitle("Çek", for: .normal)
+        photoButton.translatesAutoresizingMaskIntoConstraints = false // Önemli!
+        photoButton.backgroundColor = .white
+        photoButton.setTitleColor(.black, for: .normal)
+        photoButton.layer.cornerRadius = 25
+        photoButton.clipsToBounds = true
+        photoButton.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
+        
+        contentView.addSubview(photoButton)
+        
+        NSLayoutConstraint.activate([
+            photoButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            photoButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
+            photoButton.widthAnchor.constraint(equalToConstant: 80),
+            photoButton.heightAnchor.constraint(equalToConstant: 80)
+        ])
+        
+        contentView.bringSubviewToFront(photoButton)
+    }
+    
+    @objc func capturePhoto() {
+        let settings = AVCapturePhotoSettings()
+        settings.flashMode = .auto
+        
+        photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+    
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        if let error = error {
+            print("Fotoğraf çekme hatası: \(error)")
+            return
+        }
+        
+        guard let photoData = photo.fileDataRepresentation() else {
+            print("Fotoğraf verisi alınamadı.")
+            return
+        }
+        
+        if let capturedImage = UIImage(data: photoData) {
+            imageView.image = capturedImage
+            imageView.isHidden = false
+            
+            
+            hideElements(shouldHide: false)
+        }
+        
+        
+        captureSession.stopRunning()
+    }
+    
+    
+    
     func uploadPost() {
         guard let image = imageView.image else {
             showError(message: "Please select an image.")
@@ -125,13 +191,13 @@ class UploadVC: UIViewController {
                     self.showError(message: "Failed to retrieve image URL.")
                     return
                 }
-
-                // Profil fotoğrafı URL'sini Firestore'a kaydedin
+                
+                
                 guard let user = Auth.auth().currentUser else { return }
                 let userProfilePhotoURL = user.photoURL?.absoluteString ?? "https://your-default-photo-url.com"
                 let postedBy = user.email ?? "Unknown User"  // Fallback if the email is nil
                 
-                // 'Post' modelini kullanarak veri kaydedelim
+               
                 let post = Post(
                     imageURL: downloadURL.absoluteString,
                     description: description,
@@ -140,7 +206,7 @@ class UploadVC: UIViewController {
                     timestamp: Timestamp(date: Date())
                 )
                 
-                // Veriyi Firestore'a ekleyelim
+               
                 self.db.collection("posts").addDocument(data: [
                     "imageURL": post.imageURL,
                     "description": post.description,

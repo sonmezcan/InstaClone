@@ -8,12 +8,12 @@ class HomeVC: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var likeButtonImg: UIButton!
 
-    var userEmailArray = [String]() // Kullanıcı e-postalarını saklayan dizi
-    var userCommentArray = [String]() // Kullanıcı yorumlarını saklayan dizi
-    var likeArray = [Int]() // Gönderilerin beğeni sayılarını saklayan dizi
-    var userImageArray = [String]() // Gönderi resim URL'lerini saklayan dizi
-    var documentIdArray = [String]() // Gönderi document ID'lerini saklayan dizi
-    var userProfilePhotoArray = [String]() // Profil fotoğraf URL'lerini saklayan dizi
+    var userEmailArray = [String]() // Array to store user emails
+    var userCommentArray = [String]() // Array to store user comments
+    var likeArray = [Int]() // Array to store like counts for posts
+    var userImageArray = [String]() // Array to store image URLs of posts
+    var documentIdArray = [String]() // Array to store document IDs of posts
+    var userProfilePhotoArray = [String]() // Array to store profile photo URLs
 
     let db = Firestore.firestore()
     var posts: [Post] = []
@@ -23,16 +23,20 @@ class HomeVC: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         
-        getDataFromFirestore() // Veri almak için çağırıyoruz
+        getDataFromFirestore() // Fetch data from Firestore
     }
 
     @IBAction func commentButtonPressed(_ sender: UIButton) {
-        // Yorum ekranına geçiş yap
+        // Navigate to the comment screen
         performSegue(withIdentifier: "toCommentVC", sender: sender)
     }
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "toCommentVC", let destinationVC = segue.destination as? CommentVC, let button = sender as? UIButton, let cell = button.superview?.superview as? FeedCell, let indexPath = tableView.indexPath(for: cell) {
+        if segue.identifier == "toCommentVC",
+           let destinationVC = segue.destination as? CommentVC,
+           let button = sender as? UIButton,
+           let cell = button.superview?.superview as? FeedCell,
+           let indexPath = tableView.indexPath(for: cell) {
             destinationVC.postId = documentIdArray[indexPath.row]
         }
     }
@@ -42,7 +46,7 @@ class HomeVC: UIViewController {
         
         fireStoreDatabase.collection("posts").order(by: "timestamp", descending: true).addSnapshotListener { (snapshot, error) in
             if let error = error {
-                print("Error getting documents: \(error)")
+                print("Error fetching documents: \(error)")
                 return
             }
             guard let documents = snapshot?.documents else {
@@ -50,7 +54,7 @@ class HomeVC: UIViewController {
                 return
             }
             
-            // Dizileri sıfırla
+            // Clear arrays
             self.posts.removeAll()
             self.userEmailArray.removeAll()
             self.userCommentArray.removeAll()
@@ -75,29 +79,27 @@ class HomeVC: UIViewController {
                     let post = Post(imageURL: imageUrl, description: description, userPhotoURL: userPhotoURL, postedBy: postedBy, timestamp: timestamp)
                     self.posts.append(post)
                     
-                    // Diğer verileri dizilere ekle
+                    // Append data to respective arrays
                     self.userEmailArray.append(post.postedBy)
                     self.userCommentArray.append(post.description)
                     self.userImageArray.append(post.imageURL)
                     self.documentIdArray.append(docId)
                     self.userProfilePhotoArray.append(post.userPhotoURL)
                     
-                    // Beğeni sayısını 0 olarak ekle (Varsayılan değer)
+                    // Set default like count to 0
                     self.likeArray.append(0)
                     
-                    // Beğeni sayısını Firestore'dan çek
+                    // Fetch like count from Firestore
                     self.getLikesCount(forPostId: docId) { likeCount in
-                        // Beğeni sayısını `likeArray` dizisinde ilgili post için güncelle
                         if let index = self.documentIdArray.firstIndex(of: docId) {
                             self.likeArray[index] = likeCount
                         }
-                        
                         group.leave() // End async task after getting like count
                     }
                 }
             }
             
-            // When all async tasks are done, reload the UI
+            // Reload UI when all async tasks are done
             group.notify(queue: .main) {
                 self.updateUIWithPosts()
             }
@@ -105,7 +107,7 @@ class HomeVC: UIViewController {
     }
 
     func updateUIWithPosts() {
-        self.tableView.reloadData() // Tabloyu güncelliyoruz
+        self.tableView.reloadData() // Refresh table view
     }
 
     func getProfilePhotoURL(uid: String, completion: @escaping (URL?) -> Void) {
@@ -113,16 +115,16 @@ class HomeVC: UIViewController {
         
         storageRef.downloadURL { (url, error) in
             if let error = error {
-                print("Profil fotoğrafı URL'si alınırken hata oluştu: \(error.localizedDescription)")
+                print("Error fetching profile photo URL: \(error.localizedDescription)")
                 completion(nil)
             } else {
-                completion(url) // URL'yi geri gönder
+                completion(url) // Return the URL
             }
         }
     }
 }
 
-// MARK: - TableView Delegate ve DataSource
+// MARK: - TableView Delegate and DataSource
 extension HomeVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return userEmailArray.count
@@ -131,37 +133,33 @@ extension HomeVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
 
-           // Diğer alanları doldur
-           cell.userLabel.text = userEmailArray[indexPath.row]
-           cell.userComment.text = userCommentArray[indexPath.row]
-           cell.documentIdLabel.text = documentIdArray[indexPath.row]
+        // Configure cell
+        cell.userLabel.text = userEmailArray[indexPath.row]
+        cell.userComment.text = userCommentArray[indexPath.row]
+        cell.documentIdLabel.text = documentIdArray[indexPath.row]
+        cell.likeCounter.text = "\(likeArray[indexPath.row])"
 
-           // Beğeni sayısı, eğer `likeArray` boşsa 0 olarak ayarlanabilir
-           cell.likeCounter.text = "\(likeArray[indexPath.row])"
+        // Load profile photo
+        if let profilePhotoUrl = URL(string: userProfilePhotoArray[indexPath.row]) {
+            cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
+        } else {
+            cell.userAvatar.image = UIImage(named: "defaultProfile")
+        }
 
-           // Profil fotoğrafı ve diğer içerikleri yükle
-           let profilePhotoUrlString = userProfilePhotoArray[indexPath.row]
-           if !profilePhotoUrlString.isEmpty, let profilePhotoUrl = URL(string: profilePhotoUrlString) {
-               cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
-           } else {
-               cell.userAvatar.image = UIImage(named: "defaultProfile")
-           }
+        // Load post image
+        if let imageUrl = URL(string: userImageArray[indexPath.row]) {
+            cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
+        } else {
+            cell.userImage.image = UIImage(named: "placeholder")
+        }
 
-           let imageUrlString = userImageArray[indexPath.row]
-           if !imageUrlString.isEmpty, let imageUrl = URL(string: imageUrlString) {
-               cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
-           } else {
-               cell.userImage.image = UIImage(named: "placeholder")
-           }
-
-           return cell
+        return cell
     }
 }
 
-// MARK: - Beğeni Fonksiyonu
+// MARK: - Like Feature
 extension HomeVC {
     @IBAction func likeButton(_ sender: UIButton) {
-        // Beğeni işlemini gerçekleştir
         guard let cell = sender.superview?.superview as? FeedCell,
               let indexPath = tableView.indexPath(for: cell) else { return }
         
@@ -176,13 +174,13 @@ extension HomeVC {
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Error getting likes: \(error)")
-                completion(0)  // Hata durumunda beğeni sayısını 0 olarak döndür
+                print("Error fetching like count: \(error)")
+                completion(0)
             } else if let document = document, document.exists {
                 let likeCount = document.data()?["likeCount"] as? Int ?? 0
-                completion(likeCount)  // Beğeni sayısını döndür
+                completion(likeCount)
             } else {
-                completion(0)  // Belirtilen postun verisi yoksa beğeni sayısını 0 olarak döndür
+                completion(0)
             }
         }
     }
@@ -192,7 +190,7 @@ extension HomeVC {
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Beğeni durumu kontrol edilirken hata oluştu: \(error)")
+                print("Error toggling like: \(error)")
                 return
             }
             
@@ -213,7 +211,7 @@ extension HomeVC {
                     "likeCount": likeCount
                 ], merge: true) { error in
                     if let error = error {
-                        print("Beğeni güncellenirken hata oluştu: \(error)")
+                        print("Error updating like: \(error)")
                     } else {
                         self.updateLikeCount(for: index)
                     }
@@ -224,7 +222,7 @@ extension HomeVC {
                     "likeCount": 1
                 ]) { error in
                     if let error = error {
-                        print("Beğeni eklenirken hata oluştu: \(error)")
+                        print("Error adding like: \(error)")
                     } else {
                         self.updateLikeCount(for: index)
                     }
@@ -239,7 +237,7 @@ extension HomeVC {
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Beğeni sayısı alınırken hata oluştu: \(error)")
+                print("Error updating like count: \(error)")
                 return
             }
             

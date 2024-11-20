@@ -9,12 +9,14 @@ import UIKit
 import FirebaseAuth
 
 class LaunchVC: UIViewController {
+    // Outlets for email and password input fields
     @IBOutlet weak var emailTextInput: UITextField! // Email input field
     @IBOutlet weak var passwordTextInput: UITextField! // Password input field
     
-    var brain = Brain() // Custom brain object for placeholder handling
+    // Instance of Brain for handling placeholder configurations
+    var brain = Brain()
     
-    // Placeholder texts for email and password input fields
+    // Placeholder text and color properties for email and password input fields
     let placeholderEmail = "e-mail"
     let placeholderColorEmail = UIColor.gray
     let placeholderPassword = "password"
@@ -23,66 +25,69 @@ class LaunchVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let currentUser = Auth.auth().currentUser // Check if there's a current logged-in user
-        
-        // If a user is logged in, perform segue to the feed view controller
+        // Check if a user is already logged in
+        let currentUser = Auth.auth().currentUser
         if currentUser != nil {
+            // Navigate to FeedVC if a user is logged in
             self.performSegue(withIdentifier: "toFeedVC", sender: self)
         }
         
-        // Set the text color of input fields to white
+        // Configure text color for input fields
         emailTextInput.textColor = UIColor.white
         passwordTextInput.textColor = UIColor.white
         
-        // Set placeholders for email and password input fields
+        // Set up placeholder text and color for email and password fields
         brain.placeHolders(textField: emailTextInput, placeholderText: placeholderEmail, placeholderColor: placeholderColorEmail)
         brain.placeHolders(textField: passwordTextInput, placeholderText: placeholderPassword, placeholderColor: placeholderColorPassword)
     }
 
-    // Action triggered when the user taps the login button
+    // Action for login button tap
     @IBAction func logIn(_ sender: UIButton) {
-        
-        let email = emailTextInput.text ?? "" // Get the email text input
-        let password = passwordTextInput.text ?? "" // Get the password text input
+        // Retrieve email and password from text fields
+        let email = emailTextInput.text ?? ""
+        let password = passwordTextInput.text ?? ""
            
-        // Attempt to log the user in with the provided email and password
+        // Attempt to log in the user with provided credentials
         loginUser(email: email, password: password) { result in
-               switch result {
-               case .success(let user):
-                   // If login is successful, perform segue to the feed view controller
-                   self.performSegue(withIdentifier: "toFeedVC", sender: nil)
-               case .failure(let error):
-                   // If login fails, show an alert with the error message
-                   self.showAlert(message: error.localizedDescription, title: "Fail")
-               }
+            switch result {
+            case .success(let user):
+                // Navigate to FeedVC on successful login
+                print("Login successful for user: \(user.email ?? "unknown")")
+                self.performSegue(withIdentifier: "toFeedVC", sender: nil)
+            case .failure(let error):
+                // Show an error alert if login fails
+                print("Login failed: \(error.localizedDescription)")
+                self.showAlert(message: error.localizedDescription, title: "Fail")
+            }
         }
     }
     
-    // Action triggered when the user taps the sign-up button
+    // Action for sign-up button tap
     @IBAction func signUp(_ sender: UIButton) {
-        // Perform segue to the sign-up view controller
+        // Navigate to SignUpVC
         performSegue(withIdentifier: "toSignUpVC", sender: nil)
     }
     
-    // Function to log in the user using Firebase Authentication
+    // Function to handle user login using Firebase Authentication
     func loginUser(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
         Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
             if let error = error {
-                // If an error occurs during login, pass the error to the completion handler
+                // Pass error to completion handler if login fails
+                print("Firebase login error: \(error.localizedDescription)")
                 completion(.failure(error))
                 return
             }
             
             if let user = authResult?.user {
-                // If login is successful, pass the user to the completion handler
+                // Pass the logged-in user to the completion handler
                 completion(.success(user))
             }
         }
     }
     
-    // Function to show an alert with a given message and title
+    // Function to display an alert with a given message and title
     func showAlert(message: String, title: String) {
-        let alertController = UIAlertController(title: title , message: message, preferredStyle: .alert)
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
         alertController.addAction(okAction)
         present(alertController, animated: true, completion: nil)
