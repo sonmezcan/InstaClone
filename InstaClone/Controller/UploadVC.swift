@@ -31,7 +31,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
         
         
         hideElements(shouldHide: true)
-        segmentedControl.selectedSegmentIndex = 1
+        segmentedControl.selectedSegmentIndex = 0
         segmentedControl.addTarget(self, action: #selector(segmentChanged(_:)), for: .valueChanged)
         self.containerView.addSubview(segmentedControl)
         
@@ -42,7 +42,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        captureSession.stopRunning()
+        //captureSession.stopRunning()
     }
     
     @IBAction func uploadButton(_ sender: UIButton) {
@@ -54,7 +54,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
         case 0:
             hideElements(shouldHide: true)
             setupCamera()
-            setupCaptureButton()
+            //setupCaptureButton()
         case 1:
             hideElements(shouldHide: false)
             if imageView.image == UIImage(named: "add-icon") {
@@ -73,12 +73,12 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func setupCamera() {
         
-        captureSession = AVCaptureSession()
-        captureSession.sessionPreset = .photo
+//        captureSession = AVCaptureSession()
+//        captureSession.sessionPreset = .photo
         
         // Arka kamerayı ayarla
         guard let backCamera = AVCaptureDevice.default(for: .video) else {
-            print("Kamera bulunamadı.")
+            print("no camera found")
             return
         }
         
@@ -86,7 +86,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
             let input = try AVCaptureDeviceInput(device: backCamera)
             captureSession.addInput(input)
         } catch {
-            print("Kamera girişini eklerken hata: \(error)")
+            print("\(error)")
             return
         }
         
@@ -109,7 +109,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
     func setupCaptureButton() {
         
         let photoButton = UIButton(type: .system)
-        photoButton.setTitle("Çek", for: .normal)
+        photoButton.setTitle(" ", for: .normal)
         photoButton.translatesAutoresizingMaskIntoConstraints = false // Önemli!
         photoButton.backgroundColor = .white
         photoButton.setTitleColor(.black, for: .normal)
@@ -138,12 +138,12 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
-            print("Fotoğraf çekme hatası: \(error)")
+            print("\(error)")
             return
         }
         
         guard let photoData = photo.fileDataRepresentation() else {
-            print("Fotoğraf verisi alınamadı.")
+            print("no data")
             return
         }
         
@@ -180,14 +180,14 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
         
         imageRef.putData(imageData, metadata: nil) { metadata, error in
             guard error == nil else {
-                print("Fotoğraf yüklenirken hata oluştu: \(String(describing: error))")
+                print("\(String(describing: error))")
                 self.showError(message: "Failed to upload image. Please try again.")
                 return
             }
             
             imageRef.downloadURL { url, error in
                 guard let downloadURL = url else {
-                    print("URL alınamadı: \(String(describing: error))")
+                    print("no url: \(String(describing: error))")
                     self.showError(message: "Failed to retrieve image URL.")
                     return
                 }
@@ -219,7 +219,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
                         print("Veritabanına kaydedilemedi: \(error)")
                         self.showError(message: "Failed to save post. Please try again.")
                     } else {
-                        print("Fotoğraf başarıyla yüklendi ve Firestore'a kaydedildi!")
+                        print("success")
                         self.tabBarController?.selectedIndex = 0
                     }
                 }
