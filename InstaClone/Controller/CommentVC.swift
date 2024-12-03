@@ -6,6 +6,7 @@ class CommentVC: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var mainAvatar: UIImageView!
     @IBOutlet weak var mainCommentField: UITextField!
+    @IBOutlet weak var commentCountLabel: UILabel! 
 
     var postId: String? // Ensure that postId is correctly passed from HomeVC
     var userCommentArray = [String]() // Array to store the comments
@@ -55,18 +56,18 @@ class CommentVC: UIViewController {
         }
     }
 
+    
     func getDataFromFirestore() {
         // Ensure the postId is available before fetching comments
         guard let postId = postId else {
-            print("Error: postId is nil when fetching comments") // Error message
+            print("Error: postId is nil when fetching comments")
             return
         }
         
         let fireStoreDatabase = Firestore.firestore()
-        // Fetch the comments from Firestore, ordered by timestamp
         fireStoreDatabase.collection("posts").document(postId).collection("comments").order(by: "timestamp", descending: false).addSnapshotListener { (snapshot, error) in
             if let error = error {
-                print("Error getting comments: \(error)") // Handle errors while fetching comments
+                print("Error getting comments: \(error)")
             } else {
                 self.userCommentArray.removeAll() // Clear previous comments
                 self.userNameArray.removeAll() // Clear previous usernames
@@ -80,7 +81,34 @@ class CommentVC: UIViewController {
                         self.userNameArray.append(commentedBy) // Add the username/email to the array
                     }
                 }
+                // Send comment count to HomeVC using delegate
+                let commentCount = self.userCommentArray.count
+                if let homeVC = self.navigationController?.viewControllers.first as? HomeVC {
+                    homeVC.updateCommentCounter(count: commentCount)
+                }
+
                 self.tableView.reloadData() // Reload the table to display new comments
+            }
+        }
+    }
+
+    func updateCommentCount() {
+        guard let postId = postId else {
+            return
+        }
+        
+        let fireStoreDatabase = Firestore.firestore()
+        fireStoreDatabase.collection("posts").document(postId).collection("comments").getDocuments { (snapshot, error) in
+            if let error = error {
+                print("Error fetching comment count: \(error)")
+            } else {
+                let commentCount = snapshot?.documents.count ?? 0
+                // Nil kontrolü ekleyerek, label'ın bağlanıp bağlanmadığını kontrol edebiliriz
+                if let commentCountLabel = self.commentCountLabel {
+                    commentCountLabel.text = "\(commentCount) comments" // Yorum sayısını label'a yaz
+                } else {
+                    print("commentCountLabel is nil!")
+                }
             }
         }
     }

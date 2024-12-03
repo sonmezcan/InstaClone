@@ -7,7 +7,8 @@ import FirebaseStorage
 class HomeVC: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var likeButtonImg: UIButton!
-
+    @IBOutlet weak var commentCounter: UILabel!
+    
     var userEmailArray = [String]() // Array to store user emails
     var userCommentArray = [String]() // Array to store user comments
     var likeArray = [Int]() // Array to store like counts for posts
@@ -31,6 +32,35 @@ class HomeVC: UIViewController {
         performSegue(withIdentifier: "toCommentVC", sender: sender)
     }
 
+    func getCommentCount(forPostId postId: String, completion: @escaping (Int) -> Void) {
+        let commentsRef = Firestore.firestore().collection("posts").document(postId).collection("comments")
+        
+        commentsRef.getDocuments { snapshot, error in
+            if let error = error {
+                print("Error fetching comment count: \(error)")
+                completion(0)
+            } else {
+                let commentCount = snapshot?.documents.count ?? 0
+                completion(commentCount)
+            }
+        }
+    }
+    func observeComments(forPostId postId: String, completion: @escaping (Int) -> Void) {
+        let commentsRef = Firestore.firestore().collection("posts").document(postId).collection("comments")
+        
+        commentsRef.addSnapshotListener { snapshot, error in
+            if let error = error {
+                print("Error observing comments: \(error)")
+                completion(0)
+            } else {
+                let commentCount = snapshot?.documents.count ?? 0
+                completion(commentCount)
+            }
+        }
+    }
+    func updateCommentCounter(count: Int) {
+        commentCounter.text = "\(count) comments"
+    }
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "toCommentVC",
            let destinationVC = segue.destination as? CommentVC,
@@ -129,31 +159,47 @@ extension HomeVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return userEmailArray.count
     }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
-
-        // Configure cell
-        cell.userLabel.text = userEmailArray[indexPath.row]
-        cell.userComment.text = userCommentArray[indexPath.row]
-        cell.documentIdLabel.text = documentIdArray[indexPath.row]
-        cell.likeCounter.text = "\(likeArray[indexPath.row])"
-
-        // Load profile photo
-        if let profilePhotoUrl = URL(string: userProfilePhotoArray[indexPath.row]) {
-            cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
-        } else {
-            cell.userAvatar.image = UIImage(named: "defaultProfile")
-        }
-
-        // Load post image
-        if let imageUrl = URL(string: userImageArray[indexPath.row]) {
-            cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
-        } else {
-            cell.userImage.image = UIImage(named: "placeholder")
-        }
-
-        return cell
+    
+    
+        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
+            
+            cell.userLabel.text = userEmailArray[indexPath.row]
+            cell.userComment.text = userCommentArray[indexPath.row]
+            cell.documentIdLabel.text = documentIdArray[indexPath.row]
+            cell.likeCounter.text = "\(likeArray[indexPath.row])"
+            
+            if let profilePhotoUrl = URL(string: userProfilePhotoArray[indexPath.row]) {
+                cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
+            } else {
+                cell.userAvatar.image = UIImage(named: "defaultProfile")
+            }
+            
+            if let imageUrl = URL(string: userImageArray[indexPath.row]) {
+                cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
+            } else {
+                cell.userImage.image = UIImage(named: "placeholder")
+            }
+            
+            // Pass the postId to the cell and call configureCell
+            let postId = documentIdArray[indexPath.row]
+            cell.configureCell(postId: postId)
+            
+            
+                getCommentCount(forPostId: postId) { commentCount in
+                    DispatchQueue.main.async {
+                        cell.commentCounter.text = "\(commentCount) comments"
+                    }
+                }
+            observeComments(forPostId: postId) { commentCount in
+                DispatchQueue.main.async {
+                    cell.commentCounter.text = "\(commentCount) comments"
+                }
+            }
+            
+            return cell
+            
+        
     }
 }
 
