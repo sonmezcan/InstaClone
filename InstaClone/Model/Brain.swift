@@ -17,5 +17,13 @@ class Brain {
             attributes: [NSAttributedString.Key.foregroundColor: placeholderColor]
         )
     }
+    func dissMissKeyboard(_ view: UIView) {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+    }
+    @objc func dismissKeyboard(view: UIView) {
+            // Klavyeyi kapatır
+            view.endEditing(true)
+    }
 }
 

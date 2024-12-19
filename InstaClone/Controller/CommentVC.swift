@@ -1,25 +1,38 @@
 import UIKit
 import Firebase
 import FirebaseAuth
+import SDWebImage
 
 class CommentVC: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var mainAvatar: UIImageView!
     @IBOutlet weak var mainCommentField: UITextField!
-    @IBOutlet weak var commentCountLabel: UILabel! 
-
+    @IBOutlet weak var commentCountLabel: UILabel!
+    
     var postId: String? // Ensure that postId is correctly passed from HomeVC
     var userCommentArray = [String]() // Array to store the comments
     var userNameArray = [String]() // Array to store the names/emails of the users who commented
-
+    var userProfilePhotoUrl: String?
+    var userProfilePhotoArray = [String]() // Array to store the profile photo URLs
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.delegate = self
         tableView.dataSource = self
         tableView.rowHeight = 70
+        setupCurrentUserAvatar()
         getDataFromFirestore() // Fetch the comments from Firestore
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
     }
-
+    
+    @objc func dismissKeyboard() {
+        
+        view.endEditing(true)
+    }
+    
     @IBAction func sendButton(_ sender: UIButton) {
         // Check if the comment field is not empty
         guard let commentText = mainCommentField.text, !commentText.isEmpty else {
@@ -30,35 +43,40 @@ class CommentVC: UIViewController {
         saveComment(commentText: commentText) // Save the comment to Firestore
         mainCommentField.text = "" // Clear the comment field after sending
     }
-    
+    func setupCurrentUserAvatar() {
+        if let currentUser = Auth.auth().currentUser,
+           let profilePhotoUrl = currentUser.photoURL?.absoluteString {
+            mainAvatar.sd_setImage(with: URL(string: profilePhotoUrl), placeholderImage: UIImage(named: "defaultProfile"))
+        } else {
+            mainAvatar.image = UIImage(named: "defaultProfile")
+        }
+    }
     func saveComment(commentText: String) {
-        // Ensure the postId is available before saving the comment
         guard let postId = postId else {
-            print("Error: postId is nil") // Error message
+            print("Error: postId is nil")
             return
         }
         
         let firestore = Firestore.firestore()
-        // Prepare the comment data to be saved in Firestore
         let commentData = [
             "commentText": commentText,
-            "commentedBy": Auth.auth().currentUser?.email ?? "Anonymous", // Store email of the user who commented
-            "timestamp": FieldValue.serverTimestamp() // Store the current timestamp
+            "commentedBy": Auth.auth().currentUser?.email ?? "Anonymous",
+            "profilePhotoUrl": Auth.auth().currentUser?.photoURL?.absoluteString ?? "",
+            "timestamp": FieldValue.serverTimestamp()
         ] as [String: Any]
         
         firestore.collection("posts").document(postId).collection("comments").addDocument(data: commentData) { error in
             if let error = error {
-                print("Error adding comment: \(error)") // Handle errors while saving the comment
+                print("Error adding comment: \(error)")
             } else {
                 print("Comment added successfully")
-                self.getDataFromFirestore() // Refresh the table to show the newly added comment
+                self.getDataFromFirestore()
             }
         }
     }
-
+    
     
     func getDataFromFirestore() {
-        // Ensure the postId is available before fetching comments
         guard let postId = postId else {
             print("Error: postId is nil when fetching comments")
             return
@@ -69,29 +87,29 @@ class CommentVC: UIViewController {
             if let error = error {
                 print("Error getting comments: \(error)")
             } else {
-                self.userCommentArray.removeAll() // Clear previous comments
-                self.userNameArray.removeAll() // Clear previous usernames
-
-                // Loop through the snapshot to extract comment data
+                self.userCommentArray.removeAll()
+                self.userNameArray.removeAll()
+                self.userProfilePhotoArray.removeAll() // Clear previous profile photo URLs
+                
                 for doc in snapshot!.documents {
                     if let commentText = doc.get("commentText") as? String {
-                        self.userCommentArray.append(commentText) // Add the comment text to the array
+                        self.userCommentArray.append(commentText)
                     }
                     if let commentedBy = doc.get("commentedBy") as? String {
-                        self.userNameArray.append(commentedBy) // Add the username/email to the array
+                        self.userNameArray.append(commentedBy)
+                    }
+                    if let profilePhotoUrl = doc.get("profilePhotoUrl") as? String {
+                        self.userProfilePhotoArray.append(profilePhotoUrl)
+                    } else {
+                        // Add a placeholder URL if no profile photo URL is available
+                        self.userProfilePhotoArray.append("")
                     }
                 }
-                // Send comment count to HomeVC using delegate
-                let commentCount = self.userCommentArray.count
-                if let homeVC = self.navigationController?.viewControllers.first as? HomeVC {
-                    homeVC.updateCommentCounter(count: commentCount)
-                }
-
-                self.tableView.reloadData() // Reload the table to display new comments
+                
+                self.tableView.reloadData()
             }
         }
     }
-
     func updateCommentCount() {
         guard let postId = postId else {
             return
@@ -103,9 +121,9 @@ class CommentVC: UIViewController {
                 print("Error fetching comment count: \(error)")
             } else {
                 let commentCount = snapshot?.documents.count ?? 0
-                // Nil kontrolü ekleyerek, label'ın bağlanıp bağlanmadığını kontrol edebiliriz
+                
                 if let commentCountLabel = self.commentCountLabel {
-                    commentCountLabel.text = "\(commentCount) comments" // Yorum sayısını label'a yaz
+                    commentCountLabel.text = "\(commentCount) comments"
                 } else {
                     print("commentCountLabel is nil!")
                 }
@@ -119,15 +137,19 @@ extension CommentVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return userCommentArray.count
     }
-
+    
     // Set up the cells to display the username and the comment text
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as! CommentCell
         
-        // Display the username of the person who commented
         cell.userNameLabel.text = userNameArray[indexPath.row]
-        // Display the comment text
         cell.userComment.text = userCommentArray[indexPath.row]
+        
+        if let profilePhotoUrl = URL(string: userProfilePhotoArray[indexPath.row]), !userProfilePhotoArray[indexPath.row].isEmpty {
+            cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
+        } else {
+            cell.userAvatar.image = UIImage(named: "defaultProfile")
+        }
         
         return cell
     }

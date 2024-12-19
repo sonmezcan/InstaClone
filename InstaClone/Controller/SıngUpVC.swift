@@ -24,10 +24,11 @@ class SignUpVC: UIViewController {
     let placeholderColorPassword = UIColor.gray
     let placeholderConfirmation = "password again"
     let placeholderColorConfirmation = UIColor.gray
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
         // Set text color for the input fields
         emailTextInput.textColor = UIColor.white
         passwordTextInput.textColor = UIColor.white
@@ -37,6 +38,13 @@ class SignUpVC: UIViewController {
         brain.placeHolders(textField: emailTextInput, placeholderText: placeholderEmail, placeholderColor: placeholderColorEmail)
         brain.placeHolders(textField: passwordTextInput, placeholderText: placeholderPassword, placeholderColor: placeholderColorPassword)
         brain.placeHolders(textField: passwordConfirmation, placeholderText: placeholderConfirmation, placeholderColor: placeholderColorConfirmation)
+        let tapGestureKeyboard = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGestureKeyboard)
+    }
+    
+    @objc func dismissKeyboard() {
+        
+        view.endEditing(true)
     }
     
     @IBAction func signUp(_ sender: UIButton) {

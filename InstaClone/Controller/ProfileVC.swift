@@ -22,7 +22,7 @@ class ProfileVC: UIViewController {
         } else {
             print("No user is logged in.")
         }
-
+        
         // Add a tap gesture recognizer to the profile photo for opening the image picker
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imagePicker))
         profilePhoto.addGestureRecognizer(tapGestureRecognizer)
@@ -35,7 +35,7 @@ class ProfileVC: UIViewController {
                     print("Error loading profile photo: \(error.localizedDescription)")
                     return
                 }
-
+                
                 if let data = data, let image = UIImage(data: data) {
                     DispatchQueue.main.async {
                         self.profilePhoto.image = image
@@ -43,6 +43,13 @@ class ProfileVC: UIViewController {
                 }
             }.resume()
         }
+        let tapGestureKeyboard = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGestureKeyboard)
+    }
+    
+    @objc func dismissKeyboard() {
+        
+        view.endEditing(true)
     }
     
     // Log out the current user
@@ -57,7 +64,7 @@ class ProfileVC: UIViewController {
             print("No image selected")
             return
         }
-
+        
         // Convert the selected image to JPEG data
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             print("Failed to convert image to data")

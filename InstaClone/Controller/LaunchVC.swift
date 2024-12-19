@@ -39,8 +39,14 @@ class LaunchVC: UIViewController {
         // Set up placeholder text and color for email and password fields
         brain.placeHolders(textField: emailTextInput, placeholderText: placeholderEmail, placeholderColor: placeholderColorEmail)
         brain.placeHolders(textField: passwordTextInput, placeholderText: placeholderPassword, placeholderColor: placeholderColorPassword)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
     }
-
+    
+    @objc func dismissKeyboard() {
+       
+        view.endEditing(true)
+    }
     // Action for login button tap
     @IBAction func logIn(_ sender: UIButton) {
         // Retrieve email and password from text fields

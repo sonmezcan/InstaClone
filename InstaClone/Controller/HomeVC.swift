@@ -8,6 +8,9 @@ class HomeVC: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var likeButtonImg: UIButton!
     @IBOutlet weak var commentCounter: UILabel!
+    @IBOutlet weak var storyCollectionView: UICollectionView!
+    
+    
     
     var userEmailArray = [String]() // Array to store user emails
     var userCommentArray = [String]() // Array to store user comments
@@ -15,23 +18,39 @@ class HomeVC: UIViewController {
     var userImageArray = [String]() // Array to store image URLs of posts
     var documentIdArray = [String]() // Array to store document IDs of posts
     var userProfilePhotoArray = [String]() // Array to store profile photo URLs
-
+    
     let db = Firestore.firestore()
     var posts: [Post] = []
-
+    var stories: [Story] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.delegate = self
         tableView.dataSource = self
+       
+//        storyCollectionView.register(UINib(nibName: "StoryCell", bundle: nil), forCellWithReuseIdentifier: "StoryCell")
+        storyCollectionView.delegate = self
+            storyCollectionView.dataSource = self
+        setupCollectionView()
         
+        getStoriesFromFirestore()
         getDataFromFirestore() // Fetch data from Firestore
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
     }
-
+    
+    @objc func dismissKeyboard() {
+        
+        view.endEditing(true)
+    }
+    
     @IBAction func commentButtonPressed(_ sender: UIButton) {
         // Navigate to the comment screen
         performSegue(withIdentifier: "toCommentVC", sender: sender)
     }
-
+    
+    
     func getCommentCount(forPostId postId: String, completion: @escaping (Int) -> Void) {
         let commentsRef = Firestore.firestore().collection("posts").document(postId).collection("comments")
         
@@ -68,9 +87,9 @@ class HomeVC: UIViewController {
            let cell = button.superview?.superview as? FeedCell,
            let indexPath = tableView.indexPath(for: cell) {
             destinationVC.postId = documentIdArray[indexPath.row]
+            destinationVC.userProfilePhotoUrl = userProfilePhotoArray[indexPath.row]
         }
     }
-
     func getDataFromFirestore() {
         let fireStoreDatabase = Firestore.firestore()
         
@@ -94,7 +113,7 @@ class HomeVC: UIViewController {
             self.userProfilePhotoArray.removeAll()
             
             let group = DispatchGroup()
-
+            
             for doc in documents {
                 let docId = doc.documentID
                 
@@ -135,23 +154,23 @@ class HomeVC: UIViewController {
             }
         }
     }
-
+    
     func updateUIWithPosts() {
         self.tableView.reloadData() // Refresh table view
     }
-
-    func getProfilePhotoURL(uid: String, completion: @escaping (URL?) -> Void) {
-        let storageRef = Storage.storage().reference().child("profile_photos/\(uid).jpg")
-        
-        storageRef.downloadURL { (url, error) in
-            if let error = error {
-                print("Error fetching profile photo URL: \(error.localizedDescription)")
-                completion(nil)
-            } else {
-                completion(url) // Return the URL
-            }
-        }
-    }
+    
+//    func getProfilePhotoURL(uid: String, completion: @escaping (URL?) -> Void) {
+//        let storageRef = Storage.storage().reference().child("profile_photos/\(uid).jpg")
+//        
+//        storageRef.downloadURL { (url, error) in
+//            if let error = error {
+//                print("Error fetching profile photo URL: \(error.localizedDescription)")
+//                completion(nil)
+//            } else {
+//                completion(url) // Return the URL
+//            }
+//        }
+//    }
 }
 
 // MARK: - TableView Delegate and DataSource
@@ -161,44 +180,49 @@ extension HomeVC: UITableViewDelegate, UITableViewDataSource {
     }
     
     
-        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
-            
-            cell.userLabel.text = userEmailArray[indexPath.row]
-            cell.userComment.text = userCommentArray[indexPath.row]
-            cell.documentIdLabel.text = documentIdArray[indexPath.row]
-            cell.likeCounter.text = "\(likeArray[indexPath.row])"
-            
-            if let profilePhotoUrl = URL(string: userProfilePhotoArray[indexPath.row]) {
-                cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
-            } else {
-                cell.userAvatar.image = UIImage(named: "defaultProfile")
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! FeedCell
+        
+        cell.userLabel.text = userEmailArray[indexPath.row]
+        cell.userComment.text = userCommentArray[indexPath.row]
+        cell.documentIdLabel.text = documentIdArray[indexPath.row]
+        cell.likeCounter.text = "\(likeArray[indexPath.row])"
+        
+        if let profilePhotoUrl = URL(string: userProfilePhotoArray[indexPath.row]) {
+            cell.userAvatar.sd_setImage(with: profilePhotoUrl, placeholderImage: UIImage(named: "defaultProfile"))
+        } else {
+            cell.userAvatar.image = UIImage(named: "defaultProfile")
+        }
+        
+        if let imageUrl = URL(string: userImageArray[indexPath.row]) {
+            cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
+        } else {
+            cell.userImage.image = UIImage(named: "placeholder")
+        }
+        
+        // Pass the postId to the cell and call configureCell
+        let postId = documentIdArray[indexPath.row]
+        cell.configureCell(postId: postId)
+        
+        
+//        getCommentCount(forPostId: postId) { commentCount in
+//            DispatchQueue.main.async {
+//                cell.commentCounter.text = "\(commentCount) comments"
+//            }
+//        }
+        observeComments(forPostId: postId) { commentCount in
+            DispatchQueue.main.async {
+                cell.commentCounter.text = "\(commentCount) comments"
             }
-            
-            if let imageUrl = URL(string: userImageArray[indexPath.row]) {
-                cell.userImage.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder"))
-            } else {
-                cell.userImage.image = UIImage(named: "placeholder")
+        }
+        observeLikes(forPostId: postId) { likeCount in
+            DispatchQueue.main.async {
+                cell.likeCounter.text = "\(likeCount)"
             }
-            
-            // Pass the postId to the cell and call configureCell
-            let postId = documentIdArray[indexPath.row]
-            cell.configureCell(postId: postId)
-            
-            
-                getCommentCount(forPostId: postId) { commentCount in
-                    DispatchQueue.main.async {
-                        cell.commentCounter.text = "\(commentCount) comments"
-                    }
-                }
-            observeComments(forPostId: postId) { commentCount in
-                DispatchQueue.main.async {
-                    cell.commentCounter.text = "\(commentCount) comments"
-                }
-            }
-            
-            return cell
-            
+        }
+        
+        return cell
+        
         
     }
 }
@@ -214,7 +238,7 @@ extension HomeVC {
             toggleLike(postId: postId, userId: userId, index: indexPath.row)
         }
     }
-
+    
     func getLikesCount(forPostId postId: String, completion: @escaping (Int) -> Void) {
         let likesRef = Firestore.firestore().collection("likes").document(postId)
         
@@ -230,13 +254,13 @@ extension HomeVC {
             }
         }
     }
-
+    
     func toggleLike(postId: String, userId: String, index: Int) {
         let likesRef = Firestore.firestore().collection("likes").document(postId)
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Error toggling like: \(error)")
+                print("Like işlemi yapılırken hata oluştu: \(error)")
                 return
             }
             
@@ -252,12 +276,13 @@ extension HomeVC {
                     likeCount += 1
                 }
                 
+                // Yalnızca like ile ilgili alanları güncelleyin, timestamp'i etkilemeyin
                 likesRef.setData([
                     "likedBy": likedBy,
                     "likeCount": likeCount
                 ], merge: true) { error in
                     if let error = error {
-                        print("Error updating like: \(error)")
+                        print("Like güncellenirken hata oluştu: \(error)")
                     } else {
                         self.updateLikeCount(for: index)
                     }
@@ -268,7 +293,7 @@ extension HomeVC {
                     "likeCount": 1
                 ]) { error in
                     if let error = error {
-                        print("Error adding like: \(error)")
+                        print("Like eklerken hata oluştu: \(error)")
                     } else {
                         self.updateLikeCount(for: index)
                     }
@@ -276,21 +301,96 @@ extension HomeVC {
             }
         }
     }
-
+    func observeLikes(forPostId postId: String, completion: @escaping (Int) -> Void) {
+        let likesRef = Firestore.firestore().collection("likes").document(postId)
+        likesRef.addSnapshotListener { document, error in
+            if let document = document, document.exists {
+                let likeCount = document.data()?["likeCount"] as? Int ?? 0
+                completion(likeCount)
+            } else {
+                completion(0)
+            }
+        }
+    }
     func updateLikeCount(for index: Int) {
         let postId = documentIdArray[index]
         let likesRef = Firestore.firestore().collection("likes").document(postId)
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Error updating like count: \(error)")
+                print("Like sayısı güncellenirken hata oluştu: \(error)")
                 return
             }
             
             if let document = document, document.exists {
                 let likeCount = document.data()?["likeCount"] as? Int ?? 0
                 self.likeArray[index] = likeCount
-                self.tableView.reloadData()
+                
+                // Sadece etkilenen hücreyi güncelleyin
+                if let cell = self.tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? FeedCell {
+                    cell.likeCounter.text = "\(likeCount)"
+                }
+            }
+        }
+    }
+}
+
+//MARK: - CollectionView
+extension HomeVC: UICollectionViewDelegate, UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return stories.count
+    }
+
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "StoryCell", for: indexPath) as! StoryCell
+        let story = stories[indexPath.row]
+        
+        cell.userNameLabel.text = story.userName
+        cell.storyImageView.sd_setImage(with: URL(string: story.imageUrl), placeholderImage: UIImage(named: "placeholder"))
+        
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let selectedStory = stories[indexPath.row]
+        print("Selected story by \(selectedStory.userName)")
+        // Hikayeyi göstermek için bir detay ekranına yönlendirebilirsin
+    }
+    func setupCollectionView() {
+        let flowLayout = UICollectionViewFlowLayout()
+        flowLayout.scrollDirection = .horizontal  // Yatayda kaydırma
+        flowLayout.minimumLineSpacing = -100        // Hücreler arasındaki boşluk
+        flowLayout.itemSize = CGSize(width: 200, height: 140)  // Hücre boyutları
+        flowLayout.sectionInset = UIEdgeInsets(top: 0, left: -50, bottom: 0, right: 0) // Soldan boşluk yok
+        flowLayout.minimumInteritemSpacing = 0   // Hücreler arasındaki boşluğu kaldırmak için
+        storyCollectionView.collectionViewLayout = flowLayout // Layout'u ayarlıyoruz
+    }
+    
+    
+    
+}
+//MARK: - Story Feature
+extension HomeVC {
+    
+    func getStoriesFromFirestore() {
+        db.collection("stories").order(by: "timestamp", descending: true).addSnapshotListener { snapshot, error in
+            if let error = error {
+                print("Error fetching stories: \(error.localizedDescription)")
+                return
+            }
+            
+            self.stories.removeAll() // Mevcut hikayeleri temizle
+            
+            for document in snapshot?.documents ?? [] {
+                if let imageUrl = document.get("imageUrl") as? String,
+                   let userName = document.get("userName") as? String,
+                   let timestamp = document.get("timestamp") as? Timestamp {
+                    let story = Story(imageUrl: imageUrl, userName: userName, timestamp: timestamp.dateValue())
+                    self.stories.append(story)
+                }
+            }
+            DispatchQueue.main.async {
+                self.storyCollectionView.reloadData() // Hikaye verilerini yenile
             }
         }
     }
