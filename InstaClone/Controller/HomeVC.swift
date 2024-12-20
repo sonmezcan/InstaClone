@@ -4,7 +4,7 @@ import SDWebImage
 import FirebaseAuth
 import FirebaseStorage
 
-class HomeVC: UIViewController {
+class HomeVC: UIViewController, UIAdaptivePresentationControllerDelegate {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var likeButtonImg: UIButton!
     @IBOutlet weak var commentCounter: UILabel!
@@ -27,14 +27,14 @@ class HomeVC: UIViewController {
         super.viewDidLoad()
         tableView.delegate = self
         tableView.dataSource = self
-       
-//        storyCollectionView.register(UINib(nibName: "StoryCell", bundle: nil), forCellWithReuseIdentifier: "StoryCell")
+        
+        
         storyCollectionView.delegate = self
-            storyCollectionView.dataSource = self
+        storyCollectionView.dataSource = self
         setupCollectionView()
         
         getStoriesFromFirestore()
-        getDataFromFirestore() // Fetch data from Firestore
+        getDataFromFirestore()
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
@@ -46,7 +46,7 @@ class HomeVC: UIViewController {
     }
     
     @IBAction func commentButtonPressed(_ sender: UIButton) {
-        // Navigate to the comment screen
+        
         performSegue(withIdentifier: "toCommentVC", sender: sender)
     }
     
@@ -85,7 +85,12 @@ class HomeVC: UIViewController {
            let destinationVC = segue.destination as? CommentVC,
            let button = sender as? UIButton,
            let cell = button.superview?.superview as? FeedCell,
-           let indexPath = tableView.indexPath(for: cell) {
+        
+        let indexPath = tableView.indexPath(for: cell) {
+            
+            destinationVC.modalPresentationStyle = .pageSheet
+            destinationVC.presentationController?.delegate = self
+            
             destinationVC.postId = documentIdArray[indexPath.row]
             destinationVC.userProfilePhotoUrl = userProfilePhotoArray[indexPath.row]
         }
@@ -156,21 +161,10 @@ class HomeVC: UIViewController {
     }
     
     func updateUIWithPosts() {
-        self.tableView.reloadData() // Refresh table view
+        self.tableView.reloadData()
+        
     }
     
-//    func getProfilePhotoURL(uid: String, completion: @escaping (URL?) -> Void) {
-//        let storageRef = Storage.storage().reference().child("profile_photos/\(uid).jpg")
-//        
-//        storageRef.downloadURL { (url, error) in
-//            if let error = error {
-//                print("Error fetching profile photo URL: \(error.localizedDescription)")
-//                completion(nil)
-//            } else {
-//                completion(url) // Return the URL
-//            }
-//        }
-//    }
 }
 
 // MARK: - TableView Delegate and DataSource
@@ -205,11 +199,6 @@ extension HomeVC: UITableViewDelegate, UITableViewDataSource {
         cell.configureCell(postId: postId)
         
         
-//        getCommentCount(forPostId: postId) { commentCount in
-//            DispatchQueue.main.async {
-//                cell.commentCounter.text = "\(commentCount) comments"
-//            }
-//        }
         observeComments(forPostId: postId) { commentCount in
             DispatchQueue.main.async {
                 cell.commentCounter.text = "\(commentCount) comments"
@@ -260,7 +249,7 @@ extension HomeVC {
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Like işlemi yapılırken hata oluştu: \(error)")
+                print("Error: \(error.localizedDescription)")
                 return
             }
             
@@ -276,13 +265,13 @@ extension HomeVC {
                     likeCount += 1
                 }
                 
-                // Yalnızca like ile ilgili alanları güncelleyin, timestamp'i etkilemeyin
+                
                 likesRef.setData([
                     "likedBy": likedBy,
                     "likeCount": likeCount
                 ], merge: true) { error in
                     if let error = error {
-                        print("Like güncellenirken hata oluştu: \(error)")
+                        print("Error: \(error.localizedDescription)")
                     } else {
                         self.updateLikeCount(for: index)
                     }
@@ -293,7 +282,7 @@ extension HomeVC {
                     "likeCount": 1
                 ]) { error in
                     if let error = error {
-                        print("Like eklerken hata oluştu: \(error)")
+                        print("Error: \(error.localizedDescription)")
                     } else {
                         self.updateLikeCount(for: index)
                     }
@@ -318,7 +307,7 @@ extension HomeVC {
         
         likesRef.getDocument { document, error in
             if let error = error {
-                print("Like sayısı güncellenirken hata oluştu: \(error)")
+                print("Error: \(error.localizedDescription)")
                 return
             }
             
@@ -326,7 +315,6 @@ extension HomeVC {
                 let likeCount = document.data()?["likeCount"] as? Int ?? 0
                 self.likeArray[index] = likeCount
                 
-                // Sadece etkilenen hücreyi güncelleyin
                 if let cell = self.tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? FeedCell {
                     cell.likeCounter.text = "\(likeCount)"
                 }
@@ -340,7 +328,7 @@ extension HomeVC: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return stories.count
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "StoryCell", for: indexPath) as! StoryCell
         let story = stories[indexPath.row]
@@ -350,20 +338,20 @@ extension HomeVC: UICollectionViewDelegate, UICollectionViewDataSource {
         
         return cell
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let selectedStory = stories[indexPath.row]
         print("Selected story by \(selectedStory.userName)")
-        // Hikayeyi göstermek için bir detay ekranına yönlendirebilirsin
+        
     }
     func setupCollectionView() {
         let flowLayout = UICollectionViewFlowLayout()
-        flowLayout.scrollDirection = .horizontal  // Yatayda kaydırma
-        flowLayout.minimumLineSpacing = -100        // Hücreler arasındaki boşluk
-        flowLayout.itemSize = CGSize(width: 200, height: 140)  // Hücre boyutları
-        flowLayout.sectionInset = UIEdgeInsets(top: 0, left: -50, bottom: 0, right: 0) // Soldan boşluk yok
-        flowLayout.minimumInteritemSpacing = 0   // Hücreler arasındaki boşluğu kaldırmak için
-        storyCollectionView.collectionViewLayout = flowLayout // Layout'u ayarlıyoruz
+        flowLayout.scrollDirection = .horizontal
+        flowLayout.minimumLineSpacing = -100
+        flowLayout.itemSize = CGSize(width: 200, height: 140)
+        flowLayout.sectionInset = UIEdgeInsets(top: 0, left: -50, bottom: 0, right: 0)
+        flowLayout.minimumInteritemSpacing = 0
+        storyCollectionView.collectionViewLayout = flowLayout
     }
     
     
@@ -379,7 +367,7 @@ extension HomeVC {
                 return
             }
             
-            self.stories.removeAll() // Mevcut hikayeleri temizle
+            self.stories.removeAll()
             
             for document in snapshot?.documents ?? [] {
                 if let imageUrl = document.get("imageUrl") as? String,
@@ -390,7 +378,7 @@ extension HomeVC {
                 }
             }
             DispatchQueue.main.async {
-                self.storyCollectionView.reloadData() // Hikaye verilerini yenile
+                self.storyCollectionView.reloadData()
             }
         }
     }

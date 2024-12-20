@@ -63,7 +63,7 @@ class FeedCell: UITableViewCell {
     func updatePostTime(timestamp: Timestamp) {
         let postDate = timestamp.dateValue()
         let timeString = timeAgoSinceDate(postDate)
-        timeLabel.text = "\(timeString) shared"
+        timeLabel.text = "\(timeString) "
     }
     
     func getPostDataFromFirestore() {

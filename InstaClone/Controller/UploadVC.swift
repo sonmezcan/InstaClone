@@ -31,34 +31,32 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
         super.viewDidLoad()
         
         activityIndicator = UIActivityIndicatorView(style: .large)
-                activityIndicator.color = .gray
-                activityIndicator.center = view.center
-                activityIndicator.hidesWhenStopped = true
-                view.addSubview(activityIndicator)
-                
-                brain.placeHolders(textField: descriptionTextField, placeholderText: "Add comment", placeholderColor: .gray)
-                segmentedControl.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
-                
+        activityIndicator.color = .gray
+        activityIndicator.center = view.center
+        activityIndicator.hidesWhenStopped = true
+        view.addSubview(activityIndicator)
+        
+        brain.placeHolders(textField: descriptionTextField, placeholderText: "Add comment", placeholderColor: .gray)
+        segmentedControl.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
+        
         hideElements(shouldHide: false)
-                segmentedControl.selectedSegmentIndex = 1
-                segmentedControl.addTarget(self, action: #selector(segmentChanged(_:)), for: .valueChanged)
-                
-                let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imagePicker))
-                imageView.addGestureRecognizer(tapGestureRecognizer)
-                imageView.isUserInteractionEnabled = true
-                
-//                setupCamera()
-//                setupCaptureButton()
+        segmentedControl.selectedSegmentIndex = 1
+        segmentedControl.addTarget(self, action: #selector(segmentChanged(_:)), for: .valueChanged)
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imagePicker))
+        imageView.addGestureRecognizer(tapGestureRecognizer)
+        imageView.isUserInteractionEnabled = true
+        
     }
     
     @objc func dismissKeyboard() {
-       
+        
         view.endEditing(true)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        captureSession.stopRunning()
+        captureSession?.stopRunning()
     }
     
     @IBAction func uploadButton(_ sender: UIButton) {
@@ -82,7 +80,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
                 imagePicker()
             }
             removeFromSuperview()
-           
+            
             
         default:
             break
@@ -107,10 +105,10 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
         imageView.isHidden = shouldHide
         uploadButton.isHidden = shouldHide
         descriptionTextField.isHidden = shouldHide
-
+        
     }
     
-   func uploadPost() {
+    func uploadPost() {
         guard let image = imageView.image else {
             showError(message: "Please select an image.")
             return
@@ -124,7 +122,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
             return
         }
         
-        // Progress göstergesini başlat ve UI'yi kilitle
+        
         activityIndicator.startAnimating()
         view.isUserInteractionEnabled = false
         
@@ -169,7 +167,7 @@ class UploadVC: UIViewController, AVCapturePhotoCaptureDelegate {
                     "uid": user.uid,
                     "userPhotoURL": post.userPhotoURL
                 ]) { [self] error in
-                    // UI'yi tekrar etkinleştir ve progress göstergesini durdur
+                    
                     self.activityIndicator.stopAnimating()
                     self.view.isUserInteractionEnabled = true
                     
@@ -241,7 +239,7 @@ extension UploadVC {
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.videoGravity = .resizeAspectFill
         
-        // contentView'in yüksekliğinden 80px çıkarıyoruz, segment controller altına boşluk bırakmak için
+        
         let previewHeight = contentView.bounds.height - segmentedControl.bounds.height + 30
         previewLayer.frame = CGRect(x: 0, y: 0, width: contentView.bounds.width, height: previewHeight)
         
@@ -249,7 +247,7 @@ extension UploadVC {
         
         captureSession.startRunning()
     }
-        
+    
     func setupCaptureButton() {
         let button = UIButton(type: .system)
         button.setTitle(" ", for: .normal)
@@ -271,17 +269,17 @@ extension UploadVC {
         contentView.bringSubviewToFront(button)
         self.photoButton = button
     }
-        
+    
     @objc func capturePhoto() {
         let settings = AVCapturePhotoSettings()
         settings.flashMode = .auto
         
         photoOutput.capturePhoto(with: settings, delegate: self)
         
-        // Capture button gizleniyor
+        
         photoButton?.isHidden = true
     }
-        
+    
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
             print("\(error)")
@@ -297,17 +295,17 @@ extension UploadVC {
             imageView.image = capturedImage
             imageView.isHidden = false
             
-            // Share ve retake butonlarını göster
+            
             setupActionButtons()
             
-            // Capture button gizleniyor
+            
             photoButton?.isHidden = true
             
-            // Kamera durduruluyor
+            
             captureSession.stopRunning()
         }
     }
-        
+    
     func setupActionButtons() {
         // Share button
         let share = UIButton(type: .system)
@@ -318,7 +316,7 @@ extension UploadVC {
         share.translatesAutoresizingMaskIntoConstraints = false
         share.addTarget(self, action: #selector(sharePhoto), for: .touchUpInside)
         
-       
+        
         
         // Retake button
         let retake = UIButton(type: .system)
@@ -342,7 +340,7 @@ extension UploadVC {
             share.widthAnchor.constraint(equalToConstant: 120),
             share.heightAnchor.constraint(equalToConstant: 50),
             
-           
+            
             
             // Retake button
             retake.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
@@ -356,63 +354,63 @@ extension UploadVC {
         self.retakeButton = retake
     }
     
-        @objc func sharePhoto() {
-            // Upload photo to Firebase and save it in Firestore
-            uploadStory()
-        }
+    @objc func sharePhoto() {
+        // Upload photo to Firebase and save it in Firestore
+        uploadStory()
+    }
     
-   
+    
+    
+    @objc func retakePhoto() {
+        // Hide the image view and reset the camera
+        imageView.image = nil
+        imageView.isHidden = true
+        captureSession.startRunning()
+        photoButton?.isHidden = false
+        shareButton?.isHidden = true
+        retakeButton?.isHidden = true
         
-        @objc func retakePhoto() {
-            // Hide the image view and reset the camera
-            imageView.image = nil
-            imageView.isHidden = true
-            captureSession.startRunning()
-            photoButton?.isHidden = false
-            shareButton?.isHidden = true
-            retakeButton?.isHidden = true
-           
+    }
+    
+    func uploadStory() {
+        guard let image = imageView.image else {
+            showError(message: "Please select an image.")
+            return
         }
         
-        func uploadStory() {
-            guard let image = imageView.image else {
-                showError(message: "Please select an image.")
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            showError(message: "Failed to process image.")
+            return
+        }
+        
+        // Start activity indicator
+        activityIndicator.startAnimating()
+        view.isUserInteractionEnabled = false
+        
+        // Upload image to Firebase Storage
+        let imageName = UUID().uuidString
+        let imageRef = storage.reference().child("stories/\(imageName).jpg")
+        
+        imageRef.putData(imageData, metadata: nil) { _, error in
+            if let error = error {
+                self.showError(message: "Error uploading story: \(error.localizedDescription)")
+                self.activityIndicator.stopAnimating()
                 return
             }
             
-            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-                showError(message: "Failed to process image.")
-                return
-            }
-
-            // Start activity indicator
-            activityIndicator.startAnimating()
-            view.isUserInteractionEnabled = false
-            
-            // Upload image to Firebase Storage
-            let imageName = UUID().uuidString
-            let imageRef = storage.reference().child("stories/\(imageName).jpg")
-            
-            imageRef.putData(imageData, metadata: nil) { _, error in
-                if let error = error {
-                    self.showError(message: "Error uploading story: \(error.localizedDescription)")
+            imageRef.downloadURL { url, error in
+                guard let downloadURL = url else {
+                    self.showError(message: "Failed to retrieve URL.")
                     self.activityIndicator.stopAnimating()
                     return
                 }
                 
-                imageRef.downloadURL { url, error in
-                    guard let downloadURL = url else {
-                        self.showError(message: "Failed to retrieve URL.")
-                        self.activityIndicator.stopAnimating()
-                        return
-                    }
-                    
-                    // Save the story to Firestore
-                    self.saveStoryToFirestore(imageURL: downloadURL.absoluteString)
-                }
+                // Save the story to Firestore
+                self.saveStoryToFirestore(imageURL: downloadURL.absoluteString)
             }
         }
-
+    }
+    
     func saveStoryToFirestore(imageURL: String) {
         guard let user = Auth.auth().currentUser else {
             self.showError(message: "You must be signed in to upload a story.")

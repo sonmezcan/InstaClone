@@ -3,6 +3,7 @@ import Firebase
 import FirebaseAuth
 import SDWebImage
 
+
 class CommentVC: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var mainAvatar: UIImageView!
@@ -18,6 +19,8 @@ class CommentVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("commentVC userCommentArray Count: \(userCommentArray.count)")
+        print("commentVC userCommentArray: \(userCommentArray)")
         tableView.delegate = self
         tableView.dataSource = self
         tableView.rowHeight = 70
@@ -26,8 +29,8 @@ class CommentVC: UIViewController {
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
+        
     }
-    
     @objc func dismissKeyboard() {
         
         view.endEditing(true)
@@ -67,7 +70,7 @@ class CommentVC: UIViewController {
         
         firestore.collection("posts").document(postId).collection("comments").addDocument(data: commentData) { error in
             if let error = error {
-                print("Error adding comment: \(error)")
+                print("Error adding comment: \(error.localizedDescription)")
             } else {
                 print("Comment added successfully")
                 self.getDataFromFirestore()
@@ -85,7 +88,7 @@ class CommentVC: UIViewController {
         let fireStoreDatabase = Firestore.firestore()
         fireStoreDatabase.collection("posts").document(postId).collection("comments").order(by: "timestamp", descending: false).addSnapshotListener { (snapshot, error) in
             if let error = error {
-                print("Error getting comments: \(error)")
+                print("Error getting comments: \(error.localizedDescription)")
             } else {
                 self.userCommentArray.removeAll()
                 self.userNameArray.removeAll()
@@ -107,6 +110,24 @@ class CommentVC: UIViewController {
                 }
                 
                 self.tableView.reloadData()
+                
+                
+                if self.tableView.numberOfSections > 0, self.tableView.numberOfRows(inSection: 0) > 0 {
+                    let indexPath = IndexPath(row: self.userCommentArray.count - 1, section: 0)
+                    self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
+                } else {
+                    print("No rows available to scroll.")
+                }
+                
+                if let sheet = self.sheetPresentationController {
+                    
+                    sheet.detents = [.medium()]
+                    sheet.prefersGrabberVisible = false
+                    sheet.preferredCornerRadius = 20
+                    
+                    
+                }
+                
             }
         }
     }
@@ -118,7 +139,7 @@ class CommentVC: UIViewController {
         let fireStoreDatabase = Firestore.firestore()
         fireStoreDatabase.collection("posts").document(postId).collection("comments").getDocuments { (snapshot, error) in
             if let error = error {
-                print("Error fetching comment count: \(error)")
+                print("Error fetching comment count: \(error.localizedDescription)")
             } else {
                 let commentCount = snapshot?.documents.count ?? 0
                 
